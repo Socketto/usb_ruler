@@ -1,0 +1,44 @@
+# STM32CubeIDE generated files
+*.launch
+*.log
+*.bin
+*.elf
+*.hex
+*.map
+*.o
+*.d
+*.i
+*.lst
+*.srec
+
+# Backup and temporary files
+*~
+*.swp
+*.tmp
+
+# Build output folders
+Debug/
+Release/
+build/
+
+# Eclipse metadata
+.settings/
+.project
+.cproject
+.loadpath
+
+# Core dumps
+core
+
+# Auto-generated code (optional - comment out if you modify these manually)
+# Drivers/
+# Middlewares/
+# .mxproject
+# .ioc
+
+# VSCode config (in case you use it)
+.vscode/
+
+# OS-specific
+.DS_Store
+Thumbs.db
