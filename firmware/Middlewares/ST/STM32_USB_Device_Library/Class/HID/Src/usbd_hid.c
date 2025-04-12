@@ -158,7 +158,7 @@ __ALIGN_BEGIN static uint8_t USBD_HID_CfgFSDesc[USB_HID_CONFIG_DESC_SIZ]  __ALIG
   0x01,         /*bNumEndpoints*/
   0x03,         /*bInterfaceClass: HID*/
   0x01,         /*bInterfaceSubClass : 1=BOOT, 0=no boot*/
-  0x02,         /*nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse*/
+  0x01,         /*nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse*/
   0,            /*iInterface: Index of string descriptor*/
   /******************** Descriptor of Joystick Mouse HID ********************/
   /* 18 */
@@ -169,7 +169,7 @@ __ALIGN_BEGIN static uint8_t USBD_HID_CfgFSDesc[USB_HID_CONFIG_DESC_SIZ]  __ALIG
   0x00,         /*bCountryCode: Hardware target country*/
   0x01,         /*bNumDescriptors: Number of HID class descriptors to follow*/
   0x22,         /*bDescriptorType*/
-  HID_MOUSE_REPORT_DESC_SIZE,/*wItemLength: Total length of Report descriptor*/
+  HID_KEYBOARD_REPORT_DESC_SIZE,/*wItemLength: Total length of Report descriptor*/
   0x00,
   /******************** Descriptor of Mouse endpoint ********************/
   /* 27 */
@@ -365,6 +365,54 @@ __ALIGN_BEGIN static uint8_t HID_MOUSE_ReportDesc[HID_MOUSE_REPORT_DESC_SIZE]  _
   0x01,   0xc0
 };
 
+__ALIGN_BEGIN static uint8_t HID_KEYBOARD_ReportDesc[HID_KEYBOARD_REPORT_DESC_SIZE]  __ALIGN_END =
+{
+
+	    0x05, 0x01,       // Usage Page (Generic Desktop)
+	    0x09, 0x06,       // Usage (Keyboard)
+	    0xA1, 0x01,       // Collection (Application)
+
+	    // Modifiers (8 bit)
+	    0x05, 0x07,       // Usage Page (Key Codes)
+	    0x19, 0xE0,       // Usage Minimum (224)
+	    0x29, 0xE7,       // Usage Maximum (231)
+	    0x15, 0x00,       // Logical Minimum (0)
+	    0x25, 0x01,       // Logical Maximum (1)
+	    0x75, 0x01,       // Report Size (1)
+	    0x95, 0x08,       // Report Count (8)
+	    0x81, 0x02,       // Input (Data, Variable, Absolute) ; Modifier byte
+
+	    // Reserved byte
+	    0x75, 0x08,       // Report Size (8)
+	    0x95, 0x01,       // Report Count (1)
+	    0x81, 0x01,       // Input (Constant) ; Reserved byte
+
+	    // LED output report (Caps Lock, Num Lock, etc.)
+	    0x75, 0x01,       // Report Size (1)
+	    0x95, 0x05,       // Report Count (5)
+	    0x05, 0x08,       // Usage Page (LEDs)
+	    0x19, 0x01,       // Usage Minimum (1)
+	    0x29, 0x05,       // Usage Maximum (5)
+	    0x91, 0x02,       // Output (Data, Variable, Absolute)
+
+	    // Padding for output
+	    0x75, 0x03,       // Report Size (3)
+	    0x95, 0x01,       // Report Count (1)
+	    0x91, 0x01,       // Output (Constant)
+
+	    // Keycode array (6 bytes)
+	    0x75, 0x08,       // Report Size (8)
+	    0x95, 0x06,       // Report Count (6)
+	    0x15, 0x00,       // Logical Minimum (0)
+	    0x25, 0x65,       // Logical Maximum (101)
+	    0x05, 0x07,       // Usage Page (Key codes)
+	    0x19, 0x00,       // Usage Minimum (0)
+	    0x29, 0x65,       // Usage Maximum (101)
+	    0x81, 0x00,       // Input (Data, Array)
+
+	    0xC0              // End Collection
+};
+
 /**
   * @}
   */
@@ -398,6 +446,7 @@ static uint8_t  USBD_HID_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
   return USBD_OK;
 }
 
+
 /**
   * @brief  USBD_HID_Init
   *         DeInitialize the HID layer
@@ -429,6 +478,8 @@ static uint8_t  USBD_HID_DeInit(USBD_HandleTypeDef *pdev,
   * @param  req: usb requests
   * @retval status
   */
+
+int caps;
 static uint8_t  USBD_HID_Setup(USBD_HandleTypeDef *pdev,
                                USBD_SetupReqTypedef *req)
 {
@@ -459,6 +510,19 @@ static uint8_t  USBD_HID_Setup(USBD_HandleTypeDef *pdev,
           USBD_CtlSendData(pdev, (uint8_t *)(void *)&hhid->IdleState, 1U);
           break;
 
+        case HID_REQ_SET_REPORT:  // <-- AGGIUNGI QUESTO
+          if (req->wLength > 0 && req->wValue >> 8 == 0x02)  // 0x02 = output
+          {
+              USBD_CtlPrepareRx(pdev, hhid->report_buf, req->wLength);
+              uint8_t capsLockState = hhid->report_buf[0] & 0x02;  // Bit 1 = Caps Lock
+
+              if (capsLockState) {
+            	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
+              } else {
+            	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
+              }
+          }
+          break;
         default:
           USBD_CtlError(pdev, req);
           ret = USBD_FAIL;
@@ -483,8 +547,10 @@ static uint8_t  USBD_HID_Setup(USBD_HandleTypeDef *pdev,
         case USB_REQ_GET_DESCRIPTOR:
           if (req->wValue >> 8 == HID_REPORT_DESC)
           {
-            len = MIN(HID_MOUSE_REPORT_DESC_SIZE, req->wLength);
-            pbuf = HID_MOUSE_ReportDesc;
+            //len = MIN(HID_MOUSE_REPORT_DESC_SIZE, req->wLength);
+            //pbuf = HID_MOUSE_ReportDesc;
+            len = MIN(HID_KEYBOARD_REPORT_DESC_SIZE, req->wLength);
+            pbuf = HID_KEYBOARD_ReportDesc;
           }
           else if (req->wValue >> 8 == HID_DESCRIPTOR_TYPE)
           {

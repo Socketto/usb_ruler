@@ -47,6 +47,7 @@ extern "C" {
 #define USB_HID_CONFIG_DESC_SIZ       34U
 #define USB_HID_DESC_SIZ              9U
 #define HID_MOUSE_REPORT_DESC_SIZE    74U
+#define HID_KEYBOARD_REPORT_DESC_SIZE 63U
 
 #define HID_DESCRIPTOR_TYPE           0x21U
 #define HID_REPORT_DESC               0x22U
@@ -89,6 +90,7 @@ typedef struct
   uint32_t             IdleState;
   uint32_t             AltSetting;
   HID_StateTypeDef     state;
+  uint8_t              report_buf[8];  // Aggiungi questo buffer per il report
 }
 USBD_HID_HandleTypeDef;
 /**
