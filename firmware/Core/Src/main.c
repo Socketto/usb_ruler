@@ -97,12 +97,16 @@ void main_loop() {
         HAL_Delay(10);
         send_mouse_report(0, -5, 0); // Muove il mouse di 10 pixel
         HAL_Delay(10);*/
-        /*HAL_Delay(100);
+        HAL_Delay(100);
+        send_keyboard_report(0x06);
+        HAL_Delay(100);
+        send_keyboard_report(0x0c);
+        HAL_Delay(100);
         send_keyboard_report(0x04);
         HAL_Delay(100);
-        send_keyboard_report(0x05);
+        send_keyboard_report(0x12);
         HAL_Delay(100);
-        send_keyboard_report(0x06);*/
+        send_keyboard_report(0x2C);
     }
 }
 
@@ -281,13 +285,25 @@ static void MX_USART2_UART_Init(void)
   */
 static void MX_GPIO_Init(void)
 {
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
   /* USER CODE BEGIN MX_GPIO_Init_1 */
 
   /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : LED_Pin */
+  GPIO_InitStruct.Pin = LED_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(LED_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
