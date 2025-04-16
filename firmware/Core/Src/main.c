@@ -77,8 +77,13 @@ void send_keyboard_report(uint8_t key) {
     report[2] = key;  // Esempio: HID_KEY_A = 0x04
     USBD_HID_SendReport(&hUsbDeviceFS, report, sizeof(report));
     HAL_Delay(100);
-    report[2] = 0x00; // Rilascia il tasto
-    //USBD_HID_SendReport(&hUsbDeviceFS, report, sizeof(report));
+}
+void send_keyboard_comb_report(uint8_t modifier, uint8_t key) {
+	uint8_t report[8] = {0x00, 0x00, 0x04, 0, 0, 0, 0, 0};
+    report[0] = modifier;  // Esempio: HID_KEY_A = 0x04
+    report[2] = key;  // Esempio: HID_KEY_A = 0x04
+    USBD_HID_SendReport(&hUsbDeviceFS, report, sizeof(report));
+    HAL_Delay(100);
 }
 
 void send_mouse_report(int8_t x, int8_t y, uint8_t buttons) {
@@ -87,26 +92,51 @@ void send_mouse_report(int8_t x, int8_t y, uint8_t buttons) {
     HAL_Delay(100);
 }
 
+
+#define NONE						0
+#define ANTI_HIBERNATION			1
+#define WRITE_WORD					2
+#define LOCK_PC						3
+#define THROWING_THE_DICE			4
+#define TRANSCEIVER					5
+#define MODBUS						6
+#define ND  						7
+
+
+int IoInputSwitches = LOCK_PC;
+
 void main_loop() {
     while (1) {
-        /*send_mouse_report(5, 0, 0); // Muove il mouse di 10 pixel
-        HAL_Delay(10);
-        send_mouse_report(0, 5, 0); // Muove il mouse di 10 pixel
-        HAL_Delay(10);
-        send_mouse_report(-5, 0, 0); // Muove il mouse di 10 pixel
-        HAL_Delay(10);
-        send_mouse_report(0, -5, 0); // Muove il mouse di 10 pixel
-        HAL_Delay(10);*/
-        HAL_Delay(100);
-        send_keyboard_report(0x06);
-        HAL_Delay(100);
-        send_keyboard_report(0x0c);
-        HAL_Delay(100);
-        send_keyboard_report(0x04);
-        HAL_Delay(100);
-        send_keyboard_report(0x12);
-        HAL_Delay(100);
-        send_keyboard_report(0x2C);
+    	switch(IoInputSwitches)
+    	{
+    	case ANTI_HIBERNATION:
+    		send_mouse_report(5, 0, 0); // Muove il mouse di 10 pixel
+			HAL_Delay(10);
+			send_mouse_report(0, 5, 0); // Muove il mouse di 10 pixel
+			HAL_Delay(10);
+			send_mouse_report(-5, 0, 0); // Muove il mouse di 10 pixel
+			HAL_Delay(10);
+			send_mouse_report(0, -5, 0); // Muove il mouse di 10 pixel
+			HAL_Delay(10);
+    		break;
+    	case LOCK_PC:
+    		send_keyboard_comb_report(0x08,0x0F);
+            HAL_Delay(100);
+    		break;
+    	case WRITE_WORD:
+            HAL_Delay(100);
+            send_keyboard_report(0x06);
+            HAL_Delay(100);
+            send_keyboard_report(0x0c);
+            HAL_Delay(100);
+            send_keyboard_report(0x04);
+            HAL_Delay(100);
+            send_keyboard_report(0x12);
+            HAL_Delay(100);
+            send_keyboard_report(0x2C);
+    		break;
+    	}
+        /**/
     }
 }
 
@@ -135,6 +165,19 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+
+  switch(IoInputSwitches)
+  {
+  case ANTI_HIBERNATION:
+	  SetIsMouse(1);
+	  break; //mouse
+  case WRITE_WORD:
+  case LOCK_PC:
+  case THROWING_THE_DICE:
+	  SetIsMouse(0);
+	  break; //keyboard
+  }
+
   MX_TIM1_Init();
   MX_USART2_UART_Init();
   MX_USB_DEVICE_Init();

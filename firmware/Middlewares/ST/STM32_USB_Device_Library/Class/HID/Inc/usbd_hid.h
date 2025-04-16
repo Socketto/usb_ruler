@@ -98,7 +98,6 @@ USBD_HID_HandleTypeDef;
   */
 
 
-
 /** @defgroup USBD_CORE_Exported_Macros
   * @{
   */
@@ -125,6 +124,8 @@ uint8_t USBD_HID_SendReport(USBD_HandleTypeDef *pdev,
                             uint16_t len);
 
 uint32_t USBD_HID_GetPollingInterval(USBD_HandleTypeDef *pdev);
+
+void  SetIsMouse(uint8_t value);
 
 /**
   * @}

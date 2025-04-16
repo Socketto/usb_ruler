@@ -89,6 +89,7 @@ EndBSPDependencies */
   * @{
   */
 
+uint8_t isAMouse = 0;
 
 static uint8_t  USBD_HID_Init(USBD_HandleTypeDef *pdev,
                               uint8_t cfgidx);
@@ -478,6 +479,19 @@ static uint8_t  USBD_HID_DeInit(USBD_HandleTypeDef *pdev,
   * @param  req: usb requests
   * @retval status
   */
+void  SetIsMouse(uint8_t value)
+{
+	USBD_HID_CfgFSDesc[16] = 1;
+	USBD_HID_CfgFSDesc[25] = HID_KEYBOARD_REPORT_DESC_SIZE;
+	isAMouse = 0;
+	if(value > 0)
+	{
+		isAMouse = 1;
+		USBD_HID_CfgFSDesc[16] = 2;
+		USBD_HID_CfgFSDesc[25] = HID_MOUSE_REPORT_DESC_SIZE;
+	}
+}
+
 
 int caps;
 static uint8_t  USBD_HID_Setup(USBD_HandleTypeDef *pdev,
@@ -547,10 +561,16 @@ static uint8_t  USBD_HID_Setup(USBD_HandleTypeDef *pdev,
         case USB_REQ_GET_DESCRIPTOR:
           if (req->wValue >> 8 == HID_REPORT_DESC)
           {
-            //len = MIN(HID_MOUSE_REPORT_DESC_SIZE, req->wLength);
-            //pbuf = HID_MOUSE_ReportDesc;
-            len = MIN(HID_KEYBOARD_REPORT_DESC_SIZE, req->wLength);
-            pbuf = HID_KEYBOARD_ReportDesc;
+        	  if(isAMouse == 0)
+        	  {
+				len = MIN(HID_KEYBOARD_REPORT_DESC_SIZE, req->wLength);
+				pbuf = HID_KEYBOARD_ReportDesc;
+        	  }
+        	  else
+        	  {
+        		  len = MIN(HID_MOUSE_REPORT_DESC_SIZE, req->wLength);
+        		  pbuf = HID_MOUSE_ReportDesc;
+        	  }
           }
           else if (req->wValue >> 8 == HID_DESCRIPTOR_TYPE)
           {
