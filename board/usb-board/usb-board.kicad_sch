@@ -4711,16 +4711,6 @@
 	)
 	(wire
 		(pts
-			(xy 104.14 152.4) (xy 104.14 153.67)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "33bea80b-5001-4e89-abe7-4a65411ee34b")
-	)
-	(wire
-		(pts
 			(xy 240.03 78.74) (xy 229.87 78.74)
 		)
 		(stroke
@@ -4991,16 +4981,6 @@
 	)
 	(wire
 		(pts
-			(xy 104.14 127) (xy 104.14 132.08)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "65b0db29-29fa-4e5d-adb2-d1c2be8c1850")
-	)
-	(wire
-		(pts
 			(xy 209.55 86.36) (xy 210.82 86.36)
 		)
 		(stroke
@@ -5098,16 +5078,6 @@
 			(type default)
 		)
 		(uuid "7b634de8-6cae-408f-a525-3fd67a000f03")
-	)
-	(wire
-		(pts
-			(xy 104.14 139.7) (xy 104.14 144.78)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "7d251d05-0a22-484a-9b1a-40aeb50e104d")
 	)
 	(wire
 		(pts
@@ -6109,16 +6079,6 @@
 		)
 		(uuid "c2949867-b10e-4b5a-a1ca-f4580c4fd6fb")
 	)
-	(label "LED8"
-		(at 104.14 127 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "c6074920-5945-498b-b85e-847b7d8f02c8")
-	)
 	(label "LED"
 		(at 21.59 127 0)
 		(effects
@@ -6835,71 +6795,6 @@
 			(project "usb-board"
 				(path "/738c6582-c171-41c5-9c7c-967a52446e9f"
 					(reference "#PWR024")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "power:GND")
-		(at 104.14 153.67 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "43b305ac-f8ed-454c-a05f-ab25ea138def")
-		(property "Reference" "#PWR027"
-			(at 104.14 160.02 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Value" "GND"
-			(at 104.14 158.75 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 104.14 153.67 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" ""
-			(at 104.14 153.67 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" ""
-			(at 104.14 153.67 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "6bd56c38-a34b-4847-a82a-86573a459b8e")
-		)
-		(instances
-			(project "usb-board"
-				(path "/738c6582-c171-41c5-9c7c-967a52446e9f"
-					(reference "#PWR027")
 					(unit 1)
 				)
 			)
@@ -8030,72 +7925,6 @@
 		)
 	)
 	(symbol
-		(lib_id "Device:R")
-		(at 104.14 148.59 180)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "82b60b49-291d-4e37-b20d-2b58318cc565")
-		(property "Reference" "R11"
-			(at 101.6 148.59 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "1k5"
-			(at 106.68 148.59 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Resistor_SMD:R_1206_3216Metric_Pad1.30x1.75mm_HandSolder"
-			(at 105.918 148.59 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 104.14 148.59 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" ""
-			(at 104.14 148.59 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "551cd8d2-40f5-4cc6-a935-a55a7e1bcd19")
-		)
-		(pin "2"
-			(uuid "a92ddfe7-a9b8-419d-8732-fb9e0f6302b4")
-		)
-		(instances
-			(project "usb-board"
-				(path "/738c6582-c171-41c5-9c7c-967a52446e9f"
-					(reference "R11")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "Interface_UART:MAX485E")
 		(at 57.15 92.71 0)
 		(unit 1)
@@ -8201,7 +8030,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "LED5"
+		(property "Value" "LED6"
 			(at 87.63 138.7474 90)
 			(effects
 				(font
@@ -8270,7 +8099,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "LED4"
+		(property "Value" "LED5"
 			(at 77.47 138.7474 90)
 			(effects
 				(font
@@ -8741,7 +8570,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "LED6"
+		(property "Value" "LED7"
 			(at 97.79 138.7474 90)
 			(effects
 				(font
@@ -9396,75 +9225,6 @@
 			(project "usb-board"
 				(path "/738c6582-c171-41c5-9c7c-967a52446e9f"
 					(reference "#PWR012")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Device:LED")
-		(at 104.14 135.89 90)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "c302c1b0-4cf5-4c5a-8ddb-49b6b81b73eb")
-		(property "Reference" "D9"
-			(at 107.95 136.2074 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
-			)
-		)
-		(property "Value" "LED7"
-			(at 107.95 138.7474 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
-			)
-		)
-		(property "Footprint" "LED_SMD:LED_1206_3216Metric_Pad1.42x1.75mm_HandSolder"
-			(at 104.14 135.89 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 104.14 135.89 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" ""
-			(at 104.14 135.89 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "193dc368-e0ea-442b-abd8-913b6aa0dcf9")
-		)
-		(pin "2"
-			(uuid "4b62cf3a-468d-45df-a5f3-9be621eb284c")
-		)
-		(instances
-			(project "usb-board"
-				(path "/738c6582-c171-41c5-9c7c-967a52446e9f"
-					(reference "D9")
 					(unit 1)
 				)
 			)
