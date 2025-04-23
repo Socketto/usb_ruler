@@ -21,17 +21,6 @@ Debug/
 Release/
 build/
 
-# Eclipse metadata
-.settings/
-.project
-.cproject
-.loadpath
-
-# Auto-generated code (optional - comment out if you modify these manually)
-# Drivers/
-# Middlewares/
-# .mxproject
-# .ioc
 
 # VSCode config (in case you use it)
 .vscode/
