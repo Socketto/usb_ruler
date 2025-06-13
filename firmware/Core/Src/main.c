@@ -180,7 +180,7 @@ void main_loop() {
     	switch(IoInputSwitches)
     	{
       case NONE:
-        ChaseLedStep(currentLed);
+        ChaseLedStep(&currentLed);
         HAL_Delay(200);
       break;
     	case ANTI_HIBERNATION:

@@ -37,6 +37,7 @@ extern "C" {
   * @{
   */
 
+extern uint8_t capsLockState;
 
 /** @defgroup USBD_HID_Exported_Defines
   * @{

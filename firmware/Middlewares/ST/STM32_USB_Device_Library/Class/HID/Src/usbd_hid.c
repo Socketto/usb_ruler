@@ -492,7 +492,7 @@ void  SetIsMouse(uint8_t value)
 	}
 }
 
-
+uint8_t capsLockState=0;
 int caps;
 static uint8_t  USBD_HID_Setup(USBD_HandleTypeDef *pdev,
                                USBD_SetupReqTypedef *req)
@@ -528,7 +528,7 @@ static uint8_t  USBD_HID_Setup(USBD_HandleTypeDef *pdev,
           if (req->wLength > 0 && req->wValue >> 8 == 0x02)  // 0x02 = output
           {
               USBD_CtlPrepareRx(pdev, hhid->report_buf, req->wLength);
-              uint8_t capsLockState = hhid->report_buf[0] & 0x02;  // Bit 1 = Caps Lock
+              capsLockState = hhid->report_buf[0] & 0x02;  // Bit 1 = Caps Lock
 
               if (capsLockState) {
             	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
