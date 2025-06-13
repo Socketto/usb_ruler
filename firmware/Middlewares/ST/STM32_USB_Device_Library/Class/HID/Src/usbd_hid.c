@@ -88,7 +88,7 @@ EndBSPDependencies */
 /** @defgroup USBD_HID_Private_FunctionPrototypes
   * @{
   */
-
+uint8_t IoInputSwitches = 0;
 uint8_t isAMouse = 0;
 
 static uint8_t  USBD_HID_Init(USBD_HandleTypeDef *pdev,

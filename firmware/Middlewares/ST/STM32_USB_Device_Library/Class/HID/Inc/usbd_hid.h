@@ -72,6 +72,7 @@ extern "C" {
   * @}
   */
 
+extern uint8_t IoInputSwitches;
 
 /** @defgroup USBD_CORE_Exported_TypesDefinitions
   * @{

@@ -98,17 +98,91 @@ void send_mouse_report(int8_t x, int8_t y, uint8_t buttons) {
 #define WRITE_WORD					2
 #define LOCK_PC						3
 #define THROWING_THE_DICE			4
+/**/
 #define TRANSCEIVER					5
 #define MODBUS						6
 #define ND  						7
 
+uint8_t ReadSwitcher(void)
+{
+    uint8_t valore = 0;
 
-int IoInputSwitches = LOCK_PC;
+    // Leggi PA9 (bit 2)
+    if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_9) == GPIO_PIN_SET)
+        valore |= (1 << 2);
+
+    // Leggi PA8 (bit 1)
+    if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_8) == GPIO_PIN_SET)
+        valore |= (1 << 1);
+
+    // Leggi PB15 (bit 0)
+    if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_15) == GPIO_PIN_SET)
+        valore |= (1 << 0);
+
+    return valore;
+}
+
+
+GPIO_TypeDef* ledPorts[8] = {GPIOC, GPIOA, GPIOA, GPIOA, GPIOB, GPIOB, GPIOB, GPIOB};
+uint16_t ledPins[8] = {GPIO_PIN_13, GPIO_PIN_5, GPIO_PIN_6, GPIO_PIN_7, GPIO_PIN_0, GPIO_PIN_1, GPIO_PIN_11, GPIO_PIN_10};
+
+void ChaseLedStep(uint8_t *index) {
+    // Spegni tutti
+    for (int i = 0; i < 8; i++) {
+        HAL_GPIO_WritePin(ledPorts[i], ledPins[i], GPIO_PIN_RESET);
+    }
+    // Accendi il LED corrente
+    HAL_GPIO_WritePin(ledPorts[*index], ledPins[*index], GPIO_PIN_SET);
+    // Passa al prossimo indice (con avvolgimento)
+    *index = (*index + 1) % 8;
+}
+
+void GestisciLedDado(void)
+{
+
+    if (!capsLockState)
+        return;
+
+    // Genera numero casuale tra 1 e 6
+    uint8_t numLedAccesi = (rand() % 6) + 1;
+
+    // Prima spegni tutti i LED
+    for (int i = 0; i < 8; i++)
+    {
+        HAL_GPIO_WritePin(ledPorts[i], ledPins[i], GPIO_PIN_RESET);
+    }
+
+    // Accendi numLedAccesi LED in modo casuale
+
+    // Creo un array di indici da 0 a 7
+    uint8_t indici[8] = {0,1,2,3,4,5,6,7};
+
+    // Mescola l'array (Fisher-Yates shuffle)
+    for (int i = 7; i > 0; i--)
+    {
+        int j = rand() % (i + 1);
+        uint8_t temp = indici[i];
+        indici[i] = indici[j];
+        indici[j] = temp;
+    }
+
+    // Accende i primi numLedAccesi indici
+    for (int i = 0; i < numLedAccesi; i++)
+    {
+        HAL_GPIO_WritePin(ledPorts[indici[i]], ledPins[indici[i]], GPIO_PIN_SET);
+    }
+}
+
 
 void main_loop() {
+    uint8_t currentLed = 0;
     while (1) {
     	switch(IoInputSwitches)
     	{
+      case NONE:
+        ChaseLedStep(currentLed);
+        HAL_Delay(200);
+      break;
     	case ANTI_HIBERNATION:
     		send_mouse_report(5, 0, 0); // Muove il mouse di 10 pixel
 			HAL_Delay(10);
@@ -134,6 +208,10 @@ void main_loop() {
             send_keyboard_report(0x12);
             HAL_Delay(100);
             send_keyboard_report(0x2C);
+    		break;
+        case THROWING_THE_DICE:
+          GestisciLedDado();
+          HAL_Delay(100);
     		break;
     	}
         /**/
@@ -165,6 +243,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  IoInputSwitches = ReadSwitcher();
 
   switch(IoInputSwitches)
   {
