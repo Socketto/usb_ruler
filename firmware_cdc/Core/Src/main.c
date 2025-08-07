@@ -45,6 +45,28 @@ TIM_HandleTypeDef htim1;
 
 UART_HandleTypeDef huart2;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -104,7 +126,10 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+	  uint8_t uart_rx;
+	  if (HAL_UART_Receive(&huart2, &uart_rx, 1, 10) == HAL_OK) {
+	      CDC_Transmit_FS(&uart_rx, 1); // funzione fornita da USB CDC
+	  }
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */

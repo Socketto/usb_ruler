@@ -106,6 +106,19 @@ uint8_t UserTxBufferFS[APP_TX_DATA_SIZE];
   * @{
   */
 
+
+
+/*SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSs*/
+void RS485_SetTransmit(void) {
+    HAL_GPIO_WritePin(GPIOA, USART2_EN_Pin, GPIO_PIN_SET); // RE=1, DE=1
+}
+
+void RS485_SetReceive(void) {
+    HAL_GPIO_WritePin(GPIOA, USART2_EN_Pin, GPIO_PIN_RESET); // RE=0, DE=0
+}
+/*SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSs*/
+
+
 extern USBD_HandleTypeDef hUsbDeviceFS;
 
 /* USER CODE BEGIN EXPORTED_VARIABLES */
@@ -175,6 +188,9 @@ static int8_t CDC_DeInit_FS(void)
   * @param  length: Number of data to be sent (in bytes)
   * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
   */
+
+extern UART_HandleTypeDef huart2;
+
 static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
 {
   /* USER CODE BEGIN 5 */
@@ -219,6 +235,7 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
   /*******************************************************************************/
     case CDC_SET_LINE_CODING:
 
+
     break;
 
     case CDC_GET_LINE_CODING:
@@ -256,13 +273,28 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
   * @param  Len: Number of data received (in bytes)
   * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
   */
+//static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
+//{
+//  //* USER CODE BEGIN 6 */
+//  USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
+//  USBD_CDC_ReceivePacket(&hUsbDeviceFS);
+//  return (USBD_OK);
+//  /* USER CODE END 6 */
+//}*/
+
+extern UART_HandleTypeDef huart2;
+
 static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 {
-  /* USER CODE BEGIN 6 */
-  USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
-  USBD_CDC_ReceivePacket(&hUsbDeviceFS);
-  return (USBD_OK);
-  /* USER CODE END 6 */
+    // Trasmetti i dati ricevuti su UART (RS-485)
+    RS485_SetTransmit();
+    HAL_UART_Transmit(&huart2, Buf, *Len, 100);  // evita HAL_MAX_DELAY
+    RS485_SetReceive();
+
+    // Riabilita la ricezione USB
+    USBD_CDC_ReceivePacket(&hUsbDeviceFS);
+
+    return (USBD_OK);
 }
 
 /**
