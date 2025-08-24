@@ -6038,7 +6038,7 @@
 		(descr "SMD 3x-dip-switch SPST , Slide, row spacing 8.61 mm (338 mils), body size 6.7x9.18mm (see e.g. https://www.ctscorp.com/wp-content/uploads/219.pdf), SMD, LowProfile")
 		(tags "SMD DIP Switch SPST Slide 8.61mm 338mil SMD LowProfile")
 		(property "Reference" "SW1"
-			(at 0 -5.65 90)
+			(at -3.988 4.568 180)
 			(layer "F.SilkS")
 			(uuid "6b26353b-dc6a-4de6-b864-c0315f1ad80c")
 			(effects
