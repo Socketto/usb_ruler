@@ -93,6 +93,17 @@ uint8_t UserRxBufferFS[APP_RX_DATA_SIZE];
 /** Data to send over USB CDC are stored in this buffer   */
 uint8_t UserTxBufferFS[APP_TX_DATA_SIZE];
 
+
+// variabili globali
+volatile LineCodingTypeDef NewLineCoding = {
+    115200, // default baud
+    0,      // stop bits = 1
+    0,      // parity = none
+    8       // data bits
+};
+
+volatile uint8_t uart_needs_update = 0;
+
 /* USER CODE BEGIN PRIVATE_VARIABLES */
 
 /* USER CODE END PRIVATE_VARIABLES */
@@ -234,8 +245,14 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
   /* 6      | bDataBits  |   1   | Number Data bits (5, 6, 7, 8 or 16).          */
   /*******************************************************************************/
     case CDC_SET_LINE_CODING:
-
-
+    	NewLineCoding.BaudRate = (uint32_t)(pbuf[0] | (pbuf[1] << 8) | (pbuf[2] << 16) | (pbuf[3] << 24));
+    	NewLineCoding.StopBits = pbuf[4];
+    	NewLineCoding.Parity   = pbuf[5];
+    	NewLineCoding.DataBits = pbuf[6];
+    	if(NewLineCoding.BaudRate != 0)
+    	{
+    		uart_needs_update = 1;  // Flag per il main loop
+    	}
     break;
 
     case CDC_GET_LINE_CODING:

@@ -96,7 +96,15 @@ extern USBD_CDC_ItfTypeDef USBD_Interface_fops_FS;
 /* USER CODE BEGIN EXPORTED_VARIABLES */
 
 /* USER CODE END EXPORTED_VARIABLES */
+typedef struct {
+    uint32_t BaudRate;
+    uint8_t StopBits;
+    uint8_t Parity;
+    uint8_t DataBits;
+} LineCodingTypeDef;
 
+extern volatile LineCodingTypeDef NewLineCoding;
+extern volatile uint8_t uart_needs_update;
 /**
   * @}
   */

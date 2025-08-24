@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "usb_device.h"
+#include "usbd_cdc_if.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -129,6 +130,51 @@ int main(void)
 	  uint8_t uart_rx;
 	  if (HAL_UART_Receive(&huart2, &uart_rx, 1, 10) == HAL_OK) {
 	      CDC_Transmit_FS(&uart_rx, 1); // funzione fornita da USB CDC
+	  }
+	  if (uart_needs_update) {
+	      huart2.Init.BaudRate = NewLineCoding.BaudRate;
+
+	      // Parità
+	      switch (NewLineCoding.Parity) {
+	          case 0: huart2.Init.Parity = UART_PARITY_NONE; break;
+	          case 1: huart2.Init.Parity = UART_PARITY_ODD; break;
+	          case 2: huart2.Init.Parity = UART_PARITY_EVEN; break;
+	          default: huart2.Init.Parity = UART_PARITY_NONE; break;
+	      }
+
+	      // Stop bit
+	      switch (NewLineCoding.StopBits) {
+	          case 0: huart2.Init.StopBits = UART_STOPBITS_1; break;
+	          case 2: huart2.Init.StopBits = UART_STOPBITS_2; break;
+	          default: huart2.Init.StopBits = UART_STOPBITS_1; break;
+	      }
+
+	      // Data bit
+	      switch (NewLineCoding.DataBits) {
+	          case 8:
+	              huart2.Init.WordLength = UART_WORDLENGTH_8B; // SEMPRE 8B, anche con parità
+	              break;
+
+	          case 9:
+	              if (NewLineCoding.Parity == 0) {
+	                  huart2.Init.WordLength = UART_WORDLENGTH_9B;
+	              } else {
+	                  // 9 bit + parità non supportato, fallback
+	                  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+	              }
+	              break;
+
+	          default:
+	              huart2.Init.WordLength = UART_WORDLENGTH_8B;
+	              break;
+	      }
+
+	      HAL_UART_DeInit(&huart2);
+	      if (HAL_UART_Init(&huart2) != HAL_OK) {
+	          Error_Handler();
+	      }
+
+	      uart_needs_update = 0;
 	  }
     /* USER CODE BEGIN 3 */
   }
