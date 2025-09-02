@@ -34,9 +34,6 @@
 /* USER CODE BEGIN PD */
 
 /* USER CODE END PD */
-TIM_HandleTypeDef htim1;
-
-UART_HandleTypeDef huart2;
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
@@ -50,7 +47,7 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 
-int classUSB = 0;
+int classUSB;
 
 /* USER CODE END PV */
 
@@ -278,7 +275,7 @@ void main_loop() {
 
 int main(void)
 {
-
+	classUSB = 0;
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */

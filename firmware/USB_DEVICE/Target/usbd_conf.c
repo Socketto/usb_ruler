@@ -38,7 +38,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE END PV */
-
+extern int classUSB;
 PCD_HandleTypeDef hpcd_USB_FS;
 void Error_Handler(void);
 

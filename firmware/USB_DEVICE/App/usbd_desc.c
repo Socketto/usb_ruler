@@ -111,6 +111,7 @@ static void IntToUnicode(uint32_t value, uint8_t * pbuf, uint8_t len);
   * @brief Private functions declaration for FS.
   * @{
   */
+extern int classUSB;
 
 uint8_t * USBD_FS_DeviceDescriptor(USBD_SpeedTypeDef speed, uint16_t *length);
 uint8_t * USBD_FS_LangIDStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length);
