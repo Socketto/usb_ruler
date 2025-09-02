@@ -18,6 +18,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "usb_device.h"
+#include "usbd_cdc_if.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -32,6 +34,9 @@
 /* USER CODE BEGIN PD */
 
 /* USER CODE END PD */
+TIM_HandleTypeDef htim1;
+
+UART_HandleTypeDef huart2;
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
@@ -44,6 +49,8 @@ TIM_HandleTypeDef htim1;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
+
+int classUSB = 0;
 
 /* USER CODE END PV */
 
@@ -98,8 +105,8 @@ void send_mouse_report(int8_t x, int8_t y, uint8_t buttons) {
 #define WRITE_WORD					2
 #define LOCK_PC						3
 #define THROWING_THE_DICE			4
-/**/
 #define TRANSCEIVER					5
+/**/
 #define MODBUS						6
 #define ND  						7
 
@@ -213,6 +220,57 @@ void main_loop() {
           GestisciLedDado();
           HAL_Delay(100);
     		break;
+		case TRANSCEIVER:
+			  uint8_t uart_rx;
+			  if (HAL_UART_Receive(&huart2, &uart_rx, 1, 10) == HAL_OK) {
+				  CDC_Transmit_FS(&uart_rx, 1); // funzione fornita da USB CDC
+			  }
+			  if (uart_needs_update) {
+				  huart2.Init.BaudRate = NewLineCoding.BaudRate;
+
+				  // Parità
+				  switch (NewLineCoding.Parity) {
+					  case 0: huart2.Init.Parity = UART_PARITY_NONE; break;
+					  case 1: huart2.Init.Parity = UART_PARITY_ODD; break;
+					  case 2: huart2.Init.Parity = UART_PARITY_EVEN; break;
+					  default: huart2.Init.Parity = UART_PARITY_NONE; break;
+				  }
+
+				  // Stop bit
+				  switch (NewLineCoding.StopBits) {
+					  case 0: huart2.Init.StopBits = UART_STOPBITS_1; break;
+					  case 2: huart2.Init.StopBits = UART_STOPBITS_2; break;
+					  default: huart2.Init.StopBits = UART_STOPBITS_1; break;
+				  }
+
+				  // Data bit
+				  switch (NewLineCoding.DataBits) {
+					  case 8:
+						  huart2.Init.WordLength = UART_WORDLENGTH_8B; // SEMPRE 8B, anche con parità
+						  break;
+
+					  case 9:
+						  if (NewLineCoding.Parity == 0) {
+							  huart2.Init.WordLength = UART_WORDLENGTH_9B;
+						  } else {
+							  // 9 bit + parità non supportato, fallback
+							  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+						  }
+						  break;
+
+					  default:
+						  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+						  break;
+				  }
+
+				  HAL_UART_DeInit(&huart2);
+				  if (HAL_UART_Init(&huart2) != HAL_OK) {
+					  Error_Handler();
+				  }
+
+				  uart_needs_update = 0;
+			  }
+			break;
     	}
         /**/
     }
@@ -254,12 +312,16 @@ int main(void)
   case LOCK_PC:
   case THROWING_THE_DICE:
 	  SetIsMouse(0);
+	  classUSB = 0;
 	  break; //keyboard
+  case TRANSCEIVER:
+	  classUSB = 1;
+	  break;
   }
 
   MX_TIM1_Init();
   MX_USART2_UART_Init();
-  MX_USB_DEVICE_Init();
+  MX_USB_DEVICE_Init(classUSB);
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
