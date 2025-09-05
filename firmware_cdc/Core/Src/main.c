@@ -121,16 +121,34 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
+#define BUF_SIZE        256
+#define FRAME_TIMEOUT_MS 5   // timeout in ms tra byte per determinare fine frame
 
+static uint8_t buffer[BUF_SIZE];
+static uint8_t index = 0;
+uint8_t uart_rx;
+uint32_t last_rx_tick
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
     /* USER CODE END WHILE */
-	  uint8_t uart_rx;
-	  if (HAL_UART_Receive(&huart2, &uart_rx, 1, 10) == HAL_OK) {
-	      CDC_Transmit_FS(&uart_rx, 1); // funzione fornita da USB CDC
-	  }
+        // prova a ricevere 1 byte con timeout breve
+        if (HAL_UART_Receive(&huart2, &uart_rx, 1, 10) == HAL_OK)
+        {
+            buffer[index++] = uart_rx;          // accumula byte
+            last_rx_tick = HAL_GetTick();       // aggiorna timestamp ultimo byte
+
+            if (index >= BUF_SIZE)
+                index = BUF_SIZE - 1;           // evita overflow
+        }
+
+        // verifica timeout tra byte: fine frame Modbus
+        if (index > 0 && (HAL_GetTick() - last_rx_tick) > FRAME_TIMEOUT_MS)
+        {
+            CDC_Transmit_FS(buffer, index);     // invia frame completo via USB CDC
+            index = 0;                          // reset buffer
+        }
 	  if (uart_needs_update) {
 	      huart2.Init.BaudRate = NewLineCoding.BaudRate;
 
