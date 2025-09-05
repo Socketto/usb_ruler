@@ -201,6 +201,7 @@ static int8_t CDC_DeInit_FS(void)
   */
 
 extern UART_HandleTypeDef huart2;
+extern volatile unsigned char rectran;
 
 static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
 {
@@ -305,8 +306,8 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 {
     // Trasmetti i dati ricevuti su UART (RS-485)
     RS485_SetTransmit();
+	rectran = 1;
     HAL_UART_Transmit(&huart2, Buf, *Len, 1000);  // evita HAL_MAX_DELAY
-	
 	// Aspetta la fine effettiva del frame
 	while (__HAL_UART_GET_FLAG(&huart2, UART_FLAG_TC) == RESET);
     RS485_SetReceive();

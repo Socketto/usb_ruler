@@ -44,6 +44,8 @@
 TIM_HandleTypeDef htim1;
 
 UART_HandleTypeDef huart2;
+volatile unsigned char rectran = 0;
+unsigned char rectran_prec = 0;
 
 /* USER CODE BEGIN PV */
 
@@ -177,6 +179,13 @@ void GestisciLedDado(void)
     }
 }
 
+#define BUF_SIZE        256
+#define FRAME_TIMEOUT_MS 5   // timeout in ms tra byte per determinare fine frame
+
+static uint8_t buffer[BUF_SIZE];
+static uint8_t index = 0;
+uint8_t uart_rx;
+uint32_t last_rx_tick
 
 void main_loop() {
     uint8_t currentLed = 0;
@@ -218,10 +227,30 @@ void main_loop() {
           HAL_Delay(100);
     		break;
 		case TRANSCEIVER:
-			  uint8_t uart_rx;
-			  if (HAL_UART_Receive(&huart2, &uart_rx, 1, 10) == HAL_OK) {
-				  CDC_Transmit_FS(&uart_rx, 1); // funzione fornita da USB CDC
-			  }
+				uint8_t uart_rx;
+				
+				if(rectran!=rectran_prec)
+				{
+					rectran_prec = rectran;
+					ChaseLedStep(&currentLed);
+				}
+				// prova a ricevere 1 byte con timeout breve
+				if (HAL_UART_Receive(&huart2, &uart_rx, 1, 10) == HAL_OK)
+				{
+					buffer[index++] = uart_rx;          // accumula byte
+					last_rx_tick = HAL_GetTick();       // aggiorna timestamp ultimo byte
+
+					if (index >= BUF_SIZE)
+						index = BUF_SIZE - 1;           // evita overflow
+				}
+
+				// verifica timeout tra byte: fine frame Modbus
+				if (index > 0 && (HAL_GetTick() - last_rx_tick) > FRAME_TIMEOUT_MS)
+				{
+					CDC_Transmit_FS(buffer, index);     // invia frame completo via USB CDC
+					rectran=3;
+					index = 0;                          // reset buffer
+				}
 			  if (uart_needs_update) {
 				  huart2.Init.BaudRate = NewLineCoding.BaudRate;
 
