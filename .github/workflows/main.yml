@@ -17,7 +17,7 @@ jobs:
 
       # Compila progetto STM32CubeIDE
       - name: Build STM32CubeIDE project
-        uses: xanderhendriks/action-build-stm32cubeide@v15
+        uses: xanderhendriks/action-build-stm32cubeide@v15.0
         with:
           project-path: ./firmware        # percorso al progetto STM32CubeIDE
           build-configuration: Release        # oppure Debug
