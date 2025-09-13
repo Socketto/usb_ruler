@@ -132,15 +132,15 @@ uint8_t ReadSwitcher(void)
 GPIO_TypeDef* ledPorts[8] = {GPIOC, GPIOA, GPIOA, GPIOA, GPIOB, GPIOB, GPIOB, GPIOB};
 uint16_t ledPins[8] = {GPIO_PIN_13, GPIO_PIN_5, GPIO_PIN_6, GPIO_PIN_7, GPIO_PIN_0, GPIO_PIN_1, GPIO_PIN_11, GPIO_PIN_10};
 
-void ChaseLedStep(uint8_t *index) {
+void ChaseLedStep(uint8_t *indexl) {
     // Spegni tutti
     for (int i = 0; i < 8; i++) {
         HAL_GPIO_WritePin(ledPorts[i], ledPins[i], GPIO_PIN_RESET);
     }
     // Accendi il LED corrente
-    HAL_GPIO_WritePin(ledPorts[*index], ledPins[*index], GPIO_PIN_SET);
+    HAL_GPIO_WritePin(ledPorts[*indexl], ledPins[*indexl], GPIO_PIN_SET);
     // Passa al prossimo indice (con avvolgimento)
-    *index = (*index + 1) % 8;
+    *indexl = (*indexl + 1) % 8;
 }
 
 void GestisciLedDado(void)
@@ -183,9 +183,9 @@ void GestisciLedDado(void)
 #define FRAME_TIMEOUT_MS 5   // timeout in ms tra byte per determinare fine frame
 
 static uint8_t buffer[BUF_SIZE];
-static uint8_t index = 0;
+static uint8_t indexb = 0;
 uint8_t uart_rx;
-uint32_t last_rx_tick
+uint32_t last_rx_tick;
 
 void main_loop() {
     uint8_t currentLed = 0;
@@ -237,19 +237,19 @@ void main_loop() {
 				// prova a ricevere 1 byte con timeout breve
 				if (HAL_UART_Receive(&huart2, &uart_rx, 1, 10) == HAL_OK)
 				{
-					buffer[index++] = uart_rx;          // accumula byte
+					buffer[indexb++] = uart_rx;          // accumula byte
 					last_rx_tick = HAL_GetTick();       // aggiorna timestamp ultimo byte
 
-					if (index >= BUF_SIZE)
-						index = BUF_SIZE - 1;           // evita overflow
+					if (indexb >= BUF_SIZE)
+						indexb = BUF_SIZE - 1;           // evita overflow
 				}
 
 				// verifica timeout tra byte: fine frame Modbus
-				if (index > 0 && (HAL_GetTick() - last_rx_tick) > FRAME_TIMEOUT_MS)
+				if (indexb > 0 && (HAL_GetTick() - last_rx_tick) > FRAME_TIMEOUT_MS)
 				{
-					CDC_Transmit_FS(buffer, index);     // invia frame completo via USB CDC
+					CDC_Transmit_FS(buffer, indexb);     // invia frame completo via USB CDC
 					rectran=3;
-					index = 0;                          // reset buffer
+					indexb = 0;                          // reset buffer
 				}
 			  if (uart_needs_update) {
 				  huart2.Init.BaudRate = NewLineCoding.BaudRate;

@@ -602,12 +602,13 @@ void *USBD_static_malloc(uint32_t size)
 	if(classUSB == 0)
 	{
   		static uint32_t mem[(sizeof(USBD_HID_HandleTypeDef)/4)+1];/* On 32-bit boundary */
+  		return mem;
   	}
   	else
   	{  
   		static uint32_t mem[(sizeof(USBD_CDC_HandleTypeDef)/4)+1];/* On 32-bit boundary */
+  		return mem;
   	}
-  return mem;
 }
 
 /**
