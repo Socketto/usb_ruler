@@ -22,7 +22,7 @@ jobs:
           project-path: ./firmware        # percorso al progetto STM32CubeIDE
           build-configuration: Release        # oppure Debug
           workspace-path: ./workspace         # opzionale, default: ./workspace
-          project-target: testbluepill/Release
+          project-target: testbluepill3/Release
           
       # Pubblica l'artefatto compilato
       - name: Upload firmware artifact
