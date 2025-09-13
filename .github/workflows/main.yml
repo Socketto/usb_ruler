@@ -1,0 +1,24 @@
+name: Build STM32CubeIDE Project
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Recupera il codice
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Compila progetto STM32CubeIDE
+      - name: Build STM32CubeIDE project
+        uses: xanderhendriks/action-build-stm32cubeide@v10
+        with:
+          project-path: ./firmware        # percorso al progetto STM32CubeIDE
+          build-configuration: Release        # oppure Debug
+          workspace-path: ./workspace         # opzionale, default: ./workspace
