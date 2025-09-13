@@ -22,3 +22,13 @@ jobs:
           project-path: ./firmware        # percorso al progetto STM32CubeIDE
           build-configuration: Release        # oppure Debug
           workspace-path: ./workspace         # opzionale, default: ./workspace
+          
+      # Pubblica l'artefatto compilato
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware
+          path: |
+            firmware/Release/*.elf
+            firmware/Release/*.bin
+            firmware/Release/*.hex
