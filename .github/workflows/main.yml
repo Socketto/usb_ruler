@@ -30,6 +30,6 @@ jobs:
         with:
           name: firmware
           path: |
-            firmware/Release/*.elf
-            firmware/Release/*.bin
-            firmware/Release/*.hex
+            firmware/**/*.elf
+            firmware/**/*.bin
+            firmware/**/*.hex
