@@ -179,11 +179,11 @@ void GestisciLedDado(void)
     }
 }
 
-#define BUF_SIZE        256
+#define BUF_SIZE        2000
 #define FRAME_TIMEOUT_MS 5   // timeout in ms tra byte per determinare fine frame
 
 static uint8_t buffer[BUF_SIZE];
-static uint8_t indexb = 0;
+static uint16_t indexb = 0;
 uint8_t uart_rx;
 uint32_t last_rx_tick;
 
@@ -235,7 +235,7 @@ void main_loop() {
 					ChaseLedStep(&currentLed);
 				}
 				// prova a ricevere 1 byte con timeout breve
-				if (HAL_UART_Receive(&huart2, &uart_rx, 1, 10) == HAL_OK)
+				if (HAL_UART_Receive(&huart2, &uart_rx, 1, 0) == HAL_OK)
 				{
 					buffer[indexb++] = uart_rx;          // accumula byte
 					last_rx_tick = HAL_GetTick();       // aggiorna timestamp ultimo byte
