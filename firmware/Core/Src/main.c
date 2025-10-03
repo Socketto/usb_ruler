@@ -20,6 +20,8 @@
 #include "main.h"
 #include "usb_device.h"
 #include "usbd_cdc_if.h"
+#include <stdlib.h>
+#include <time.h>
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -105,9 +107,8 @@ void send_mouse_report(int8_t x, int8_t y, uint8_t buttons) {
 #define LOCK_PC						3
 #define THROWING_THE_DICE			4
 #define TRANSCEIVER					5
-/**/
 #define MODBUS						6
-#define ND  						7
+#define NONE_CASUAL  			7
 
 uint8_t ReadSwitcher(void)
 {
@@ -193,6 +194,11 @@ void main_loop() {
     	switch(IoInputSwitches)
     	{
       case NONE:
+        ChaseLedStep(&currentLed);
+        HAL_Delay(200);
+      break;
+      case NONE_CASUAL:
+        currentLed = rand() % 9;
         ChaseLedStep(&currentLed);
         HAL_Delay(200);
       break;
@@ -297,7 +303,9 @@ void main_loop() {
 				  uart_needs_update = 0;
 			  }
 			break;
-    	}
+      case MODBUS:
+      
+    	break;
         /**/
     }
 }
@@ -340,6 +348,7 @@ int main(void)
 	  SetIsMouse(0);
 	  classUSB = 0;
 	  break; //keyboard
+  case MODBUS:
   case TRANSCEIVER:
 	  classUSB = 1;
 	  break;
