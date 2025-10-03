@@ -19,7 +19,18 @@
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
+#include <stdbool.h>
 #include "usbd_cdc_if.h"
+
+
+#define NONE						0
+#define ANTI_HIBERNATION			1
+#define WRITE_WORD					2
+#define LOCK_PC						3
+#define THROWING_THE_DICE			4
+#define TRANSCEIVER					5
+#define MODBUS						6
+#define NONE_CASUAL  			7
 
 /* USER CODE BEGIN INCLUDE */
 
@@ -357,6 +368,8 @@ void modbus_build_exception(uint8_t address, uint8_t function, uint8_t exception
     modbus_response_len = 5;
 }
 
+extern GPIO_TypeDef* ledPorts[];
+extern uint16_t ledPins[];
 // Funzione di decodifica e risposta
 bool decode_modbus_frame(const uint8_t *buffer, uint16_t len, ModbusFrame *frame) {
     if (len < 4) {
@@ -426,7 +439,7 @@ bool decode_modbus_frame(const uint8_t *buffer, uint16_t len, ModbusFrame *frame
         {
             uint16_t start_addr = (frame->data[0] << 8) | frame->data[1];
             uint16_t quantity   = (frame->data[2] << 8) | frame->data[3];
-            uint8_t byte_count  = frame->data[4];
+   
 
             if ((start_addr + quantity) <= 8) {
                 for (uint16_t i = 0; i < quantity; i++) {
