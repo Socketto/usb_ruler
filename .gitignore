@@ -3,3 +3,7 @@ firmware/Debug/
 firmware_cdc/Debug/
 firmware_cdc/Release/
 firmware_cdc/.metadata/
+*backups*
+*.bak
+*.rej
+*fp-info-cache
