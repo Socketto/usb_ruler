@@ -497,10 +497,12 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 		break;
 	case MODBUS:
 		ModbusFrame frame;
-		if (decode_modbus_frame(Buf, sizeof(Buf), &frame))
+		if (decode_modbus_frame(Buf, *Len, &frame))
 		{
 			CDC_Transmit_FS(modbus_response, modbus_response_len);
 		}
+
+		USBD_CDC_ReceivePacket(&hUsbDeviceFS);
 		break;
 	default:
 		break;

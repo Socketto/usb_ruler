@@ -198,9 +198,9 @@ void main_loop() {
 			HAL_Delay(200);
 			break;
 		case NONE_CASUAL:
-			currentLed = rand() % 9;
+			currentLed = rand() % 8;
 			ChaseLedStep(&currentLed);
-			HAL_Delay(200);
+			HAL_Delay(50);
 			break;
 		case ANTI_HIBERNATION:
 			send_mouse_report(5, 0, 0); // Muove il mouse di 10 pixel
