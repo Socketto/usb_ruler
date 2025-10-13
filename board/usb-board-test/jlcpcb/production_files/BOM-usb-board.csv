@@ -1,5 +1,7 @@
 Comment,Designator,Footprint,LCSC,Quantity
 "Connector, USB-TYPE-C-16P",J2,TYPE-C-SMD_HX-TYPE-C-16PIN,C2927039,1
+SP485EEN,U4,SOIC-8_L5.0-W4.0-P1.27-LS6.0-BL,C6855,1
+X50328MSB2GI,X1,CRYSTAL-SMD_L5.0-W3.2,C115962,1
 1K5,R5,R_1206_3216Metric_Pad1.30x1.75mm_HandSolder,,1
 100n,C3,C_1206_3216Metric_Pad1.33x1.80mm_HandSolder,,1
 1k5,R3,R_1206_3216Metric_Pad1.30x1.75mm_HandSolder,,1
@@ -8,7 +10,6 @@ Comment,Designator,Footprint,LCSC,Quantity
 100nF,C2,C_1206_3216Metric_Pad1.33x1.80mm_HandSolder,,1
 Conn_01x04_Pin,J4,PinHeader_1x04_P2.54mm_Vertical,,1
 10k,R4,R_1206_3216Metric_Pad1.30x1.75mm_HandSolder,,1
-MAX485E,U3,SO-8_3.9x4.9mm_P1.27mm,,1
 STM32F103C8T6,U2,LQFP-48_7x7mm_P0.5mm,,1
 LED1,D2,LED_1206_3216Metric_Pad1.42x1.75mm_HandSolder,,1
 LED5,D6,LED_1206_3216Metric_Pad1.42x1.75mm_HandSolder,,1
@@ -21,7 +22,6 @@ LED7,D8,LED_1206_3216Metric_Pad1.42x1.75mm_HandSolder,,1
 1k5,R7,R_1206_3216Metric_Pad1.30x1.75mm_HandSolder,,1
 100nF,C1,C_1206_3216Metric,,1
 1k5,R1,R_1206_3216Metric_Pad1.30x1.75mm_HandSolder,,1
-8Mhz,Y1,Crystal_SMD_HC49-SD,,1
 SW_DIP_x03,SW1,SW_DIP_SPSTx03_Slide_6.7x9.18mm_W8.61mm_P2.54mm_LowProfile,,1
 AMS1117-3.3,U1,SOT-223-3_TabPin2,,1
 20p,C5,C_1206_3216Metric_Pad1.33x1.80mm_HandSolder,,1
