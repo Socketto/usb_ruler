@@ -492,8 +492,6 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 		//while (__HAL_UART_GET_FLAG(&huart2, UART_FLAG_TC) == RESET);
 		RS485_SetReceive();
 
-		// Riabilita la ricezione USB
-		USBD_CDC_ReceivePacket(&hUsbDeviceFS);
 		break;
 	case MODBUS:
 		ModbusFrame frame;
@@ -502,7 +500,6 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 			CDC_Transmit_FS(modbus_response, modbus_response_len);
 		}
 
-		USBD_CDC_ReceivePacket(&hUsbDeviceFS);
 		break;
 	default:
 		break;
@@ -510,6 +507,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 	// Trasmetti i dati ricevuti su UART (RS-485)
 
 
+	USBD_CDC_ReceivePacket(&hUsbDeviceFS);
 	return (USBD_OK);
 }
 
