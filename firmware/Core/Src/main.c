@@ -200,7 +200,7 @@ void main_loop() {
 		case NONE_CASUAL:
 			currentLed = rand() % 8;
 			ChaseLedStep(&currentLed);
-			HAL_Delay(50);
+			HAL_Delay((rand() % 60) +1);
 			break;
 		case ANTI_HIBERNATION:
 			send_mouse_report(5, 0, 0); // Muove il mouse di 10 pixel
@@ -325,6 +325,7 @@ void main_loop() {
 	}
 }
 
+bool isUsb = false;
 int main(void)
 {
 	classUSB = 0;
@@ -356,22 +357,28 @@ int main(void)
 	{
 	case ANTI_HIBERNATION:
 		SetIsMouse(1);
+		isUsb = true;
 		break; //mouse
 	case WRITE_WORD:
 	case LOCK_PC:
 	case THROWING_THE_DICE:
+		isUsb = true;
 		SetIsMouse(0);
 		classUSB = 0;
 		break; //keyboard
 	case MODBUS:
 	case TRANSCEIVER:
+		isUsb = true;
 		classUSB = 1;
 		break;
 	}
 
 	MX_TIM1_Init();
 	MX_USART2_UART_Init();
-	MX_USB_DEVICE_Init(classUSB);
+	if(isUsb)
+	{
+		MX_USB_DEVICE_Init(classUSB);
+	}
 	/* USER CODE BEGIN 2 */
 
 	/* USER CODE END 2 */
