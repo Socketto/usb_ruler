@@ -13236,6 +13236,17 @@
 			(justify left bottom)
 		)
 	)
+	(gr_text "-AB"
+		(at 222.9358 102.5144 90)
+		(layer "F.SilkS")
+		(uuid "120ea766-8b4f-4542-b137-699592e1a8e2")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
 	(gr_text "USB"
 		(at 77.216 103.886 0)
 		(layer "F.SilkS")
@@ -13270,6 +13281,17 @@
 				(thickness 0.14224)
 			)
 			(justify left bottom)
+		)
+	)
+	(gr_text "+DC-"
+		(at 102.2096 110.236 0)
+		(layer "F.SilkS")
+		(uuid "50e863e2-48e1-434b-87f8-c37daf5ea23a")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
 		)
 	)
 	(gr_text "0"
