@@ -325,7 +325,7 @@ void main_loop() {
 	}
 }
 
-bool isUsb = false;
+char isUsb = 0;
 int main(void)
 {
 	classUSB = 0;
@@ -357,25 +357,25 @@ int main(void)
 	{
 	case ANTI_HIBERNATION:
 		SetIsMouse(1);
-		isUsb = true;
+		isUsb = 1;
 		break; //mouse
 	case WRITE_WORD:
 	case LOCK_PC:
 	case THROWING_THE_DICE:
-		isUsb = true;
+		isUsb = 1;
 		SetIsMouse(0);
 		classUSB = 0;
 		break; //keyboard
 	case MODBUS:
 	case TRANSCEIVER:
-		isUsb = true;
+		isUsb = 1;
 		classUSB = 1;
 		break;
 	}
 
 	MX_TIM1_Init();
 	MX_USART2_UART_Init();
-	if(isUsb)
+	if(isUsb==1)
 	{
 		MX_USB_DEVICE_Init(classUSB);
 	}
