@@ -276,7 +276,38 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
 		break;
 
 	case CDC_SEND_BREAK:
+				if (length == 0xFFFF) // Inizio break continuo
+		        {
+		            RS485_SetTransmit();
 
+		            // Disabilita la UART per controllare il pin TX direttamente
+		            huart2.Instance->CR1 &= ~USART_CR1_UE;
+
+		            // Forza il pin TX basso
+		            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_RESET);
+		        }
+		        else if (length == 0x0000) // Fine break
+		        {
+		            // Rilascia il pin TX e riattiva la UART
+		            huart2.Instance->CR1 |= USART_CR1_UE;
+
+		            RS485_SetReceive();
+
+		        }
+		        else
+		        {
+		            // Break di durata specifica
+		            RS485_SetTransmit();
+
+		            huart2.Instance->CR1 &= ~USART_CR1_UE;
+		            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_RESET);
+
+		            HAL_Delay(length); // break per N ms
+
+		            huart2.Instance->CR1 |= USART_CR1_UE;
+		            RS485_SetReceive();
+
+		        }
 		break;
 
 	default:
