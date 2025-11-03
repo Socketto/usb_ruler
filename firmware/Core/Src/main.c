@@ -138,9 +138,16 @@ uint8_t ReadSwitcher(void)
 	return valore;
 }
 
+// 1 3 8 5 6 4 2 7
+//GPIO_TypeDef* ledPorts[8] = {GPIOC, GPIOA, GPIOA, GPIOA, GPIOB, GPIOB, GPIOB, GPIOB};
+//uint16_t ledPins[8] = {GPIO_PIN_13, GPIO_PIN_5, GPIO_PIN_6, GPIO_PIN_7, GPIO_PIN_0, GPIO_PIN_1, GPIO_PIN_11, GPIO_PIN_10};
 
-GPIO_TypeDef* ledPorts[8] = {GPIOC, GPIOA, GPIOA, GPIOA, GPIOB, GPIOB, GPIOB, GPIOB};
-uint16_t ledPins[8] = {GPIO_PIN_13, GPIO_PIN_5, GPIO_PIN_6, GPIO_PIN_7, GPIO_PIN_0, GPIO_PIN_1, GPIO_PIN_11, GPIO_PIN_10};
+
+// ordine: 1 2 3 4 5 6 7 8
+GPIO_TypeDef* ledPorts[8] = {GPIOC, GPIOB, GPIOA, GPIOB, GPIOA, GPIOB, GPIOB, GPIOA};
+uint16_t ledPins[8]       = {GPIO_PIN_13, GPIO_PIN_11, GPIO_PIN_5, GPIO_PIN_1, GPIO_PIN_7, GPIO_PIN_0, GPIO_PIN_10, GPIO_PIN_6};
+
+
 
 void ChaseLedStep(uint8_t *indexl)
 {
@@ -201,7 +208,7 @@ void main_loop() {
 		{
 		case NONE:
 			ChaseLedStep(&currentLed);
-			HAL_Delay(200);
+			HAL_Delay(100);
 			break;
 		case NONE_CASUAL:
 			currentLed = rand() % 8;
