@@ -44,13 +44,6 @@
 
 /* Private variables ---------------------------------------------------------*/
 TIM_HandleTypeDef htim1;
-TIM_HandleTypeDef htim2;
-
-TIM_HandleTypeDef* ledTimers[8] = {&htim1,&htim1,&htim1,&htim1,&htim2,&htim2,&htim2,&htim2};
-uint32_t ledChannels[8] = {
-    TIM_CHANNEL_1, TIM_CHANNEL_2, TIM_CHANNEL_3, TIM_CHANNEL_4,
-    TIM_CHANNEL_1, TIM_CHANNEL_2, TIM_CHANNEL_3, TIM_CHANNEL_4
-};
 
 UART_HandleTypeDef huart2;
 volatile unsigned char rectran = 0;
@@ -66,9 +59,7 @@ int classUSB;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_TIM1_Init(void);
-static void MX_TIM2_Init(void);
 static void MX_USART2_UART_Init(void);
-void InitPWM(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -149,49 +140,52 @@ uint16_t ledPins[8]       = {GPIO_PIN_13, GPIO_PIN_11, GPIO_PIN_5, GPIO_PIN_1, G
 
 
 
-void ChaseLedStep(uint8_t *indexl)
-{
-    uint16_t maxDuty = __HAL_TIM_GET_AUTORELOAD(ledTimers[0]);
-    uint16_t halfDuty = maxDuty/2; // 50% duty
-
-    // Spegni tutti
-    for(int i=0;i<8;i++)
-        __HAL_TIM_SET_COMPARE(ledTimers[i], ledChannels[i], 0);
-
-    // Accendi il LED corrente al 50%
-    __HAL_TIM_SET_COMPARE(ledTimers[*indexl], ledChannels[*indexl], halfDuty);
-
-    *indexl = (*indexl + 1) % 8;
+void ChaseLedStep(uint8_t *indexl) {
+	// Spegni tutti
+	for (int i = 0; i < 8; i++) {
+		HAL_GPIO_WritePin(ledPorts[i], ledPins[i], GPIO_PIN_RESET);
+	}
+	// Accendi il LED corrente
+	HAL_GPIO_WritePin(ledPorts[*indexl], ledPins[*indexl], GPIO_PIN_SET);
+	// Passa al prossimo indice (con avvolgimento)
+	*indexl = (*indexl + 1) % 8;
 }
 
 void GestisciLedDado(void)
 {
-    uint8_t numLedAccesi = (rand() % 6) + 1;
-    uint8_t indici[8] = {0,1,2,3,4,5,6,7};
-    uint16_t maxDuty = __HAL_TIM_GET_AUTORELOAD(ledTimers[0]);
-    uint16_t halfDuty = maxDuty/2;
 
-    // Mescola array
-    for(int i=7;i>0;i--){
-        int j = rand()%(i+1);
-        uint8_t tmp = indici[i]; indici[i]=indici[j]; indici[j]=tmp;
-    }
+	if (!capsLockState)
+		return;
 
-    // Spegni tutti
-    for(int i=0;i<8;i++)
-        __HAL_TIM_SET_COMPARE(ledTimers[i], ledChannels[i],0);
+	// Genera numero casuale tra 1 e 6
+	uint8_t numLedAccesi = (rand() % 6) + 1;
 
-    // Accendi casuali
-    for(int i=0;i<numLedAccesi;i++)
-        __HAL_TIM_SET_COMPARE(ledTimers[indici[i]], ledChannels[indici[i]], halfDuty);
+	// Prima spegni tutti i LED
+	for (int i = 0; i < 8; i++)
+	{
+		HAL_GPIO_WritePin(ledPorts[i], ledPins[i], GPIO_PIN_RESET);
+	}
+
+	// Accendi numLedAccesi LED in modo casuale
+
+	// Creo un array di indici da 0 a 7
+	uint8_t indici[8] = {0,1,2,3,4,5,6,7};
+
+	// Mescola l'array (Fisher-Yates shuffle)
+	for (int i = 7; i > 0; i--)
+	{
+		int j = rand() % (i + 1);
+		uint8_t temp = indici[i];
+		indici[i] = indici[j];
+		indici[j] = temp;
+	}
+
+	// Accende i primi numLedAccesi indici
+	for (int i = 0; i < numLedAccesi; i++)
+	{
+		HAL_GPIO_WritePin(ledPorts[indici[i]], ledPins[indici[i]], GPIO_PIN_SET);
+	}
 }
-
-void InitPWM(void)
-{
-    for(int i=0;i<8;i++)
-        HAL_TIM_PWM_Start(ledTimers[i], ledChannels[i]);
-}
-
 
 #define BUF_SIZE        2000
 #define FRAME_TIMEOUT_MS 5   // timeout in ms tra byte per determinare fine frame
@@ -387,7 +381,6 @@ int main(void)
 	}
 
 	MX_TIM1_Init();
-    MX_TIM2_Init();
 	MX_USART2_UART_Init();
 	if(isUsb==1)
 	{
@@ -397,7 +390,6 @@ int main(void)
 
 	/* USER CODE END 2 */
 
-    InitPWM();  // avvia tutti i canali PWM
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
 	while (1)
@@ -415,24 +407,44 @@ int main(void)
   */
 void SystemClock_Config(void)
 {
-    RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-    RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-    RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-    RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
-    RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-    RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL6;
-    HAL_RCC_OscConfig(&RCC_OscInitStruct);
+	RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+	RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+	RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
-    RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                                  |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-    RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-    RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
-    RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
-    HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1);
+	/** Initializes the RCC Oscillators according to the specified parameters
+	* in the RCC_OscInitTypeDef structure.
+	*/
+	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+	RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+	RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
+	RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+	RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL6;
+	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+	{
+		Error_Handler();
+	}
+
+	/** Initializes the CPU, AHB and APB buses clocks
+	*/
+	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+	                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
+	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+
+	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USB;
+	PeriphClkInit.UsbClockSelection = RCC_USBCLKSOURCE_PLL;
+	if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
+	{
+		Error_Handler();
+	}
 }
 
 /**
@@ -442,50 +454,44 @@ void SystemClock_Config(void)
   */
 static void MX_TIM1_Init(void)
 {
-    TIM_OC_InitTypeDef sConfigOC = {0};
 
-    htim1.Instance = TIM1;
-    htim1.Init.Prescaler = 0;
-    htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-    htim1.Init.Period = 65535;
-    htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-    htim1.Init.RepetitionCounter = 0;
-    HAL_TIM_PWM_Init(&htim1);
+	/* USER CODE BEGIN TIM1_Init 0 */
 
-    sConfigOC.OCMode = TIM_OCMODE_PWM1;
-    sConfigOC.Pulse = 0;
-    sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
-    sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+	/* USER CODE END TIM1_Init 0 */
 
-    for(int i=0;i<4;i++)
-    {
-        HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, ledChannels[i]);
-    }
+	TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+	TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+	/* USER CODE BEGIN TIM1_Init 1 */
+
+	/* USER CODE END TIM1_Init 1 */
+	htim1.Instance = TIM1;
+	htim1.Init.Prescaler = 0;
+	htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
+	htim1.Init.Period = 65535;
+	htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+	htim1.Init.RepetitionCounter = 0;
+	htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+	if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+	if (HAL_TIM_ConfigClockSource(&htim1, &sClockSourceConfig) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+	if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	/* USER CODE BEGIN TIM1_Init 2 */
+
+	/* USER CODE END TIM1_Init 2 */
+
 }
-
-/* --- TIM2 INIT --- */
-static void MX_TIM2_Init(void)
-{
-    TIM_OC_InitTypeDef sConfigOC = {0};
-
-    htim2.Instance = TIM2;
-    htim2.Init.Prescaler = 0;
-    htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-    htim2.Init.Period = 65535;
-    htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-    HAL_TIM_PWM_Init(&htim2);
-
-    sConfigOC.OCMode = TIM_OCMODE_PWM1;
-    sConfigOC.Pulse = 0;
-    sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
-    sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
-
-    for(int i=0;i<4;i++)
-    {
-        HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, ledChannels[i+4]);
-    }
-}
-
 
 /**
   * @brief USART2 Initialization Function
@@ -547,26 +553,26 @@ static void MX_GPIO_Init(void)
 	/*Configure GPIO pin Output Level */
 	HAL_GPIO_WritePin(GPIOB, LED4_Pin|LED5_Pin|LED7_Pin|LED6_Pin, GPIO_PIN_RESET);
 
-
-    // LED TIM1: PA8..PA11
-    GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-    // LED TIM2: PA0..PA3
-    GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+	/*Configure GPIO pin : LED_Pin */
+	GPIO_InitStruct.Pin = LED_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(LED_GPIO_Port, &GPIO_InitStruct);
 
 	/*Configure GPIO pins : USART2_EN_Pin LED1_Pin LED2_Pin LED3_Pin */
-	GPIO_InitStruct.Pin = USART2_EN_Pin;
+	GPIO_InitStruct.Pin = USART2_EN_Pin|LED1_Pin|LED2_Pin|LED3_Pin;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+	/*Configure GPIO pins : LED4_Pin LED5_Pin LED7_Pin LED6_Pin */
+	GPIO_InitStruct.Pin = LED4_Pin|LED5_Pin|LED7_Pin|LED6_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
 	/*Configure GPIO pin : INBIT3_Pin */
 	GPIO_InitStruct.Pin = INBIT3_Pin;
