@@ -103,14 +103,14 @@ void send_mouse_report(int8_t x, int8_t y, uint8_t buttons) {
 }
 
 
-#define NONE						0
+#define NONE_CASUAL  			    0
 #define ANTI_HIBERNATION			1
 #define WRITE_WORD					2
 #define LOCK_PC						3
 #define THROWING_THE_DICE			4
 #define TRANSCEIVER					5
 #define MODBUS						6
-#define NONE_CASUAL  			7
+#define NONE						7
 
 uint8_t ReadSwitcher(void)
 {
