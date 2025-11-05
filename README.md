@@ -42,4 +42,6 @@ By setting different binary combinations (**000–111**), the board performs **e
 
 Designed and developed by the **CAREL Tools Team**.
 
+![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://github.com/Socketto/usb_ruler)
+
 ---
