@@ -213,6 +213,7 @@ static int8_t CDC_DeInit_FS(void)
 
 extern UART_HandleTypeDef huart2;
 extern volatile unsigned char rectran;
+extern bool break_value;
 
 static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
 {
@@ -276,39 +277,35 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
 		break;
 
 	case CDC_SEND_BREAK:
-				if (length == 0xFFFF) // Inizio break continuo
-		        {
-		            RS485_SetTransmit();
+	{
+		break_value = !break_value;
+	    if (break_value)   // inizio break continuo
+	    {
+	        RS485_SetTransmit();
 
-		            // Disabilita la UART per controllare il pin TX direttamente
-		            huart2.Instance->CR1 &= ~USART_CR1_UE;
+	        HAL_UART_DeInit(&huart2);  // rilascia controlli sulla TX
 
-		            // Forza il pin TX basso
-		            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_RESET);
-		        }
-		        else if (length == 0x0000) // Fine break
-		        {
-		            // Rilascia il pin TX e riattiva la UART
-		            huart2.Instance->CR1 |= USART_CR1_UE;
+	        GPIO_InitTypeDef GPIO_InitStruct = {0};
+	        GPIO_InitStruct.Pin = GPIO_PIN_2;
+	        GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	        GPIO_InitStruct.Pull = GPIO_NOPULL;
+	        GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+	        HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-		            RS485_SetReceive();
+	        HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_RESET); // TX LOW
+	    }
+	    else if (!break_value)  // fine break
+	    {
+	        HAL_GPIO_DeInit(GPIOA, GPIO_PIN_2);  // libera GPIO
 
-		        }
-		        else
-		        {
-		            // Break di durata specifica
-		            RS485_SetTransmit();
+	        // re-inizializza UART (torna controllo hardware del pin)
+	        HAL_UART_Init(&huart2);
 
-		            huart2.Instance->CR1 &= ~USART_CR1_UE;
-		            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_RESET);
+	        RS485_SetReceive();
+	    }
+	}
+	break;
 
-		            HAL_Delay(length); // break per N ms
-
-		            huart2.Instance->CR1 |= USART_CR1_UE;
-		            RS485_SetReceive();
-
-		        }
-		break;
 
 	default:
 		break;

@@ -21,6 +21,7 @@
 #include "usb_device.h"
 #include "usbd_cdc_if.h"
 #include <stdlib.h>
+#include <stdbool.h>
 #include <time.h>
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -47,6 +48,7 @@ TIM_HandleTypeDef htim1;
 
 UART_HandleTypeDef huart2;
 volatile unsigned char rectran = 0;
+volatile extern bool break_value=false;
 unsigned char rectran_prec = 0;
 
 /* USER CODE BEGIN PV */
@@ -241,6 +243,17 @@ void main_loop() {
 			break;
 		case TRANSCEIVER:
 			uint8_t uart_rx;
+
+			if(break_value)
+			{
+			    for(int i=0;i<8;i++)
+			    	HAL_GPIO_WritePin(ledPorts[i], ledPins[i], GPIO_PIN_SET);
+			    HAL_Delay(100);
+			    for(int i=0;i<8;i++)
+			    	HAL_GPIO_WritePin(ledPorts[i], ledPins[i], GPIO_PIN_RESET);
+			    HAL_Delay(100);
+			    return;
+			}
 
 			if(rectran!=rectran_prec)
 			{
