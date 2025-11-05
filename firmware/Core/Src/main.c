@@ -48,7 +48,7 @@ TIM_HandleTypeDef htim1;
 
 UART_HandleTypeDef huart2;
 volatile unsigned char rectran = 0;
-volatile extern bool break_value=false;
+volatile bool break_value=false;
 unsigned char rectran_prec = 0;
 
 /* USER CODE BEGIN PV */
@@ -137,8 +137,8 @@ uint8_t ReadSwitcher(void)
 
 
 // ordine: 1 2 3 4 5 6 7 8
-GPIO_TypeDef* ledPorts[8] = {GPIOC, GPIOB, GPIOA, GPIOB, GPIOA, GPIOB, GPIOB, GPIOA};
-uint16_t ledPins[8]       = {GPIO_PIN_13, GPIO_PIN_11, GPIO_PIN_5, GPIO_PIN_1, GPIO_PIN_7, GPIO_PIN_0, GPIO_PIN_10, GPIO_PIN_6};
+GPIO_TypeDef* ledPorts[8] = {GPIOC      , GPIOA      , GPIOB      , GPIOB     , GPIOB     , GPIOA     , GPIOA      , GPIOB};
+uint16_t ledPins[8]       = {GPIO_PIN_13, GPIO_PIN_6 , GPIO_PIN_10, GPIO_PIN_0, GPIO_PIN_1, GPIO_PIN_7, GPIO_PIN_5 , GPIO_PIN_11};
 
 
 
