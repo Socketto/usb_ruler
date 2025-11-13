@@ -59,7 +59,7 @@ int classUSB;
 #define PWM_RESOLUTION 100  // 0–100 step di luminosità
 #define PWM_BASE_FREQ 200   // frequenza PWM percepita (Hz)
 
-#define DUTY_CYCLE_LED_ON  2
+#define DUTY_CYCLE_LED_ON  50
 /* USER CODE END PV */
 // Variabili PWM
 volatile uint8_t pwm_duty[NUM_LEDS] = {0}; // intensità 0–100 per ogni LED
@@ -161,17 +161,27 @@ int8_t FindLedIndex(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin)
     return -1; // non trovato
 }
 
-void HAL_GPIO_WritePin_EX(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin, GPIO_PinState PinState)
+void HAL_GPIO_WritePin_EX(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin, int PinState)
 {
     int8_t ledIndex = FindLedIndex(GPIOx, GPIO_Pin);
 
     if (ledIndex >= 0)
     {
         // Se il LED è nel gruppo PWM, gestiamo noi
-        if (PinState == GPIO_PIN_RESET)
+        if (PinState == 0)
             pwm_duty[ledIndex] = 0;     // LED spento (0% duty)
         else
-            pwm_duty[ledIndex] = DUTY_CYCLE_LED_ON;   // LED acceso pieno (100% duty)
+        {
+        	if(PinState == 2)
+        	{
+        		if(pwm_duty[ledIndex] > DUTY_CYCLE_LED_ON/4)
+        			pwm_duty[ledIndex] -= DUTY_CYCLE_LED_ON/4;
+        		else
+        			pwm_duty[ledIndex] =0;
+        	}
+        	else
+        		pwm_duty[ledIndex] = DUTY_CYCLE_LED_ON;   // LED acceso pieno (100% duty)
+        }
     }
     else
     {
@@ -207,10 +217,10 @@ void TIM4_IRQHandler(void)
     HAL_TIM_IRQHandler(&htim4);
 }
 
-void ChaseLedStep(uint8_t *indexl) {
+void ChaseLedStep(uint8_t *indexl,int type) {
 	// Spegni tutti
 	for (int i = 0; i < 8; i++) {
-		HAL_GPIO_WritePin_EX(ledPorts[i], ledPins[i], GPIO_PIN_RESET);
+		HAL_GPIO_WritePin_EX(ledPorts[i], ledPins[i], type);
 	}
 	// Accendi il LED corrente
 	HAL_GPIO_WritePin_EX(ledPorts[*indexl], ledPins[*indexl], GPIO_PIN_SET);
@@ -268,12 +278,12 @@ void main_loop() {
 		switch(IoInputSwitches)
 		{
 		case NONE:
-			ChaseLedStep(&currentLed);
+			ChaseLedStep(&currentLed,2);
 			HAL_Delay(100);
 			break;
 		case NONE_CASUAL:
 			currentLed = rand() % 8;
-			ChaseLedStep(&currentLed);
+			ChaseLedStep(&currentLed,2);
 			HAL_Delay((rand() % 60) +1);
 			break;
 		case ANTI_HIBERNATION:
@@ -323,7 +333,7 @@ void main_loop() {
 			if(rectran!=rectran_prec)
 			{
 				rectran_prec = rectran;
-				ChaseLedStep(&currentLed);
+				ChaseLedStep(&currentLed,0);
 			}
 			// prova a ricevere 1 byte con timeout breve
 			if (HAL_UART_Receive(&huart2, &uart_rx, 1, 0) == HAL_OK)
