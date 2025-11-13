@@ -58,6 +58,8 @@ int classUSB;
 #define NUM_LEDS 8
 #define PWM_RESOLUTION 100  // 0–100 step di luminosità
 #define PWM_BASE_FREQ 200   // frequenza PWM percepita (Hz)
+
+#define DUTY_CYCLE_LED_ON  2
 /* USER CODE END PV */
 // Variabili PWM
 volatile uint8_t pwm_duty[NUM_LEDS] = {0}; // intensità 0–100 per ogni LED
@@ -166,10 +168,10 @@ void HAL_GPIO_WritePin_EX(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin, GPIO_PinState 
     if (ledIndex >= 0)
     {
         // Se il LED è nel gruppo PWM, gestiamo noi
-        if (PinState == GPIO_PIN_SET)
+        if (PinState == GPIO_PIN_RESET)
             pwm_duty[ledIndex] = 0;     // LED spento (0% duty)
         else
-            pwm_duty[ledIndex] = 50;   // LED acceso pieno (100% duty)
+            pwm_duty[ledIndex] = DUTY_CYCLE_LED_ON;   // LED acceso pieno (100% duty)
     }
     else
     {
@@ -194,9 +196,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         for (uint8_t i = 0; i < NUM_LEDS; i++)
         {
             if (pwm_counter < pwm_duty[i])
-                HAL_GPIO_WritePin_EX(ledPorts[i], ledPins[i], GPIO_PIN_RESET); // LED ON (active low)
+                HAL_GPIO_WritePin(ledPorts[i], ledPins[i], GPIO_PIN_SET); // LED ON (active low)
             else
-                HAL_GPIO_WritePin_EX(ledPorts[i], ledPins[i], GPIO_PIN_SET);   // LED OFF
+                HAL_GPIO_WritePin(ledPorts[i], ledPins[i], GPIO_PIN_RESET);   // LED OFF
         }
     }
 }

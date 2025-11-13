@@ -116,6 +116,8 @@ extern volatile uint8_t uart_needs_update;
 
 uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len);
 
+void HAL_GPIO_WritePin_EX(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin, GPIO_PinState PinState);
+
 /* USER CODE BEGIN EXPORTED_FUNCTIONS */
 
 /* USER CODE END EXPORTED_FUNCTIONS */

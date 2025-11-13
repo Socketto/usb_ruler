@@ -446,9 +446,9 @@ bool decode_modbus_frame(const uint8_t *buffer, uint16_t len, ModbusFrame *frame
 
 		if (coil_addr < 8) {
 			if (coil_val == 0xFF00) {
-				HAL_GPIO_WritePin(ledPorts[coil_addr], ledPins[coil_addr], GPIO_PIN_SET);
+				HAL_GPIO_WritePin_EX(ledPorts[coil_addr], ledPins[coil_addr], GPIO_PIN_SET);
 			} else if (coil_val == 0x0000) {
-				HAL_GPIO_WritePin(ledPorts[coil_addr], ledPins[coil_addr], GPIO_PIN_RESET);
+				HAL_GPIO_WritePin_EX(ledPorts[coil_addr], ledPins[coil_addr], GPIO_PIN_RESET);
 			} else {
 				// valore illegale b exception
 				modbus_build_exception(frame->address, frame->function, 0x03); // Illegal Data Value
@@ -475,7 +475,7 @@ bool decode_modbus_frame(const uint8_t *buffer, uint16_t len, ModbusFrame *frame
 				uint8_t bit_index = i % 8;
 				int coil = (frame->data[byte_index] >> bit_index) & 0x01;
 
-				HAL_GPIO_WritePin(ledPorts[start_addr + i],
+				HAL_GPIO_WritePin_EX(ledPorts[start_addr + i],
 				                  ledPins[start_addr + i],
 				                  coil ? GPIO_PIN_SET : GPIO_PIN_RESET);
 			}
