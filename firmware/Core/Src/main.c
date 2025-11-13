@@ -54,13 +54,22 @@ unsigned char rectran_prec = 0;
 /* USER CODE BEGIN PV */
 
 int classUSB;
-
+// Parametri PWM software
+#define NUM_LEDS 8
+#define PWM_RESOLUTION 100  // 0–100 step di luminosità
+#define PWM_BASE_FREQ 200   // frequenza PWM percepita (Hz)
 /* USER CODE END PV */
+// Variabili PWM
+volatile uint8_t pwm_duty[NUM_LEDS] = {0}; // intensità 0–100 per ogni LED
+volatile uint8_t pwm_counter = 0;
 
+// Handle timer
+TIM_HandleTypeDef htim4;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_TIM1_Init(void);
+static void MX_TIM4_Init(void);
 static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
@@ -140,15 +149,69 @@ uint8_t ReadSwitcher(void)
 GPIO_TypeDef* ledPorts[8] = {GPIOC      , GPIOA      , GPIOB      , GPIOB     , GPIOB     , GPIOA     , GPIOA      , GPIOB};
 uint16_t ledPins[8]       = {GPIO_PIN_13, GPIO_PIN_6 , GPIO_PIN_10, GPIO_PIN_0, GPIO_PIN_1, GPIO_PIN_7, GPIO_PIN_5 , GPIO_PIN_11};
 
+int8_t FindLedIndex(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin)
+{
+    for (uint8_t i = 0; i < NUM_LEDS; i++)
+    {
+        if (ledPorts[i] == GPIOx && ledPins[i] == GPIO_Pin)
+            return i;
+    }
+    return -1; // non trovato
+}
 
+void HAL_GPIO_WritePin_EX(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin, GPIO_PinState PinState)
+{
+    int8_t ledIndex = FindLedIndex(GPIOx, GPIO_Pin);
+
+    if (ledIndex >= 0)
+    {
+        // Se il LED è nel gruppo PWM, gestiamo noi
+        if (PinState == GPIO_PIN_SET)
+            pwm_duty[ledIndex] = 0;     // LED spento (0% duty)
+        else
+            pwm_duty[ledIndex] = 50;   // LED acceso pieno (100% duty)
+    }
+    else
+    {
+        // Pin normale → uso HAL standard
+        HAL_GPIO_WritePin(GPIOx, GPIO_Pin, PinState);
+    }
+}
+
+// Parametri PWM software
+
+// Handle timer
+TIM_HandleTypeDef htim4;
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+    if (htim->Instance == TIM4)
+    {
+        pwm_counter++;
+        if (pwm_counter >= PWM_RESOLUTION)
+            pwm_counter = 0;
+
+        for (uint8_t i = 0; i < NUM_LEDS; i++)
+        {
+            if (pwm_counter < pwm_duty[i])
+                HAL_GPIO_WritePin_EX(ledPorts[i], ledPins[i], GPIO_PIN_RESET); // LED ON (active low)
+            else
+                HAL_GPIO_WritePin_EX(ledPorts[i], ledPins[i], GPIO_PIN_SET);   // LED OFF
+        }
+    }
+}
+void TIM4_IRQHandler(void)
+{
+    HAL_TIM_IRQHandler(&htim4);
+}
 
 void ChaseLedStep(uint8_t *indexl) {
 	// Spegni tutti
 	for (int i = 0; i < 8; i++) {
-		HAL_GPIO_WritePin(ledPorts[i], ledPins[i], GPIO_PIN_RESET);
+		HAL_GPIO_WritePin_EX(ledPorts[i], ledPins[i], GPIO_PIN_RESET);
 	}
 	// Accendi il LED corrente
-	HAL_GPIO_WritePin(ledPorts[*indexl], ledPins[*indexl], GPIO_PIN_SET);
+	HAL_GPIO_WritePin_EX(ledPorts[*indexl], ledPins[*indexl], GPIO_PIN_SET);
 	// Passa al prossimo indice (con avvolgimento)
 	*indexl = (*indexl + 1) % 8;
 }
@@ -165,7 +228,7 @@ void GestisciLedDado(void)
 	// Prima spegni tutti i LED
 	for (int i = 0; i < 8; i++)
 	{
-		HAL_GPIO_WritePin(ledPorts[i], ledPins[i], GPIO_PIN_RESET);
+		HAL_GPIO_WritePin_EX(ledPorts[i], ledPins[i], GPIO_PIN_RESET);
 	}
 
 	// Accendi numLedAccesi LED in modo casuale
@@ -185,7 +248,7 @@ void GestisciLedDado(void)
 	// Accende i primi numLedAccesi indici
 	for (int i = 0; i < numLedAccesi; i++)
 	{
-		HAL_GPIO_WritePin(ledPorts[indici[i]], ledPins[indici[i]], GPIO_PIN_SET);
+		HAL_GPIO_WritePin_EX(ledPorts[indici[i]], ledPins[indici[i]], GPIO_PIN_SET);
 	}
 }
 
@@ -247,10 +310,10 @@ void main_loop() {
 			if(break_value)
 			{
 			    for(int i=0;i<8;i++)
-			    	HAL_GPIO_WritePin(ledPorts[i], ledPins[i], GPIO_PIN_SET);
+			    	HAL_GPIO_WritePin_EX(ledPorts[i], ledPins[i], GPIO_PIN_SET);
 			    HAL_Delay(100);
 			    for(int i=0;i<8;i++)
-			    	HAL_GPIO_WritePin(ledPorts[i], ledPins[i], GPIO_PIN_RESET);
+			    	HAL_GPIO_WritePin_EX(ledPorts[i], ledPins[i], GPIO_PIN_RESET);
 			    HAL_Delay(100);
 			    return;
 			}
@@ -371,6 +434,7 @@ int main(void)
 
 	/* Initialize all configured peripherals */
 	MX_GPIO_Init();
+	MX_TIM4_Init();  // Attiva PWM software
 	IoInputSwitches = ReadSwitcher();
 
 	switch(IoInputSwitches)
@@ -458,6 +522,25 @@ void SystemClock_Config(void)
 	{
 		Error_Handler();
 	}
+}
+
+static void MX_TIM4_Init(void)
+{
+    __HAL_RCC_TIM4_CLK_ENABLE();
+
+    htim4.Instance = TIM4;
+    htim4.Init.Prescaler = 72 - 1;      // 1 MHz base clock (72MHz/72)
+    htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+
+    // Calcolo periodo per ottenere PWM_BASE_FREQ × PWM_RESOLUTION
+    // Esempio: 200 Hz × 100 step = 20 kHz → periodo = 1000000 / 20000 = 50
+    htim4.Init.Period = (1000000 / (PWM_BASE_FREQ * PWM_RESOLUTION)) - 1;
+    htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+    HAL_TIM_Base_Init(&htim4);
+
+    HAL_TIM_Base_Start_IT(&htim4); // Avvia timer con interrupt
+	HAL_NVIC_SetPriority(TIM4_IRQn, 1, 0);
+	HAL_NVIC_EnableIRQ(TIM4_IRQn);
 }
 
 /**
