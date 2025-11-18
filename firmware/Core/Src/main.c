@@ -17,6 +17,15 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
+
+
+
+
+
+//#define US_KEYBOARD 1
+
+
+
 #include "main.h"
 #include "usb_device.h"
 #include "usbd_cdc_if.h"
@@ -97,14 +106,14 @@ void send_keyboard_report(uint8_t key) {
 	uint8_t report[8] = {0x00, 0x00, 0x04, 0, 0, 0, 0, 0};
 	report[2] = key;  // Esempio: HID_KEY_A = 0x04
 	USBD_HID_SendReport(&hUsbDeviceFS, report, sizeof(report));
-	HAL_Delay(100);
+	HAL_Delay(10);
 }
 void send_keyboard_comb_report(uint8_t modifier, uint8_t key) {
 	uint8_t report[8] = {0x00, 0x00, 0x04, 0, 0, 0, 0, 0};
 	report[0] = modifier;  // Esempio: HID_KEY_A = 0x04
 	report[2] = key;  // Esempio: HID_KEY_A = 0x04
 	USBD_HID_SendReport(&hUsbDeviceFS, report, sizeof(report));
-	HAL_Delay(100);
+	HAL_Delay(10);
 }
 
 void send_mouse_report(int8_t x, int8_t y, uint8_t buttons) {
@@ -269,6 +278,22 @@ typedef struct {
     uint8_t shift;
 } hid_map_t;
 
+#ifdef US_KEYBOARD
+const hid_map_t hid_map[] = {
+    {'a', 0x04, 0}, {'b', 0x05, 0}, {'c', 0x06, 0}, {'d', 0x07, 0},
+    {'e', 0x08, 0}, {'f', 0x09, 0}, {'g', 0x0A, 0}, {'h', 0x0B, 0},
+    {'i', 0x0C, 0}, {'j', 0x0D, 0}, {'k', 0x0E, 0}, {'l', 0x0F, 0},
+    {'m', 0x10, 0}, {'n', 0x11, 0}, {'o', 0x12, 0}, {'p', 0x13, 0},
+    {'q', 0x14, 0}, {'r', 0x15, 0}, {'s', 0x16, 0}, {'t', 0x17, 0},
+    {'u', 0x18, 0}, {'v', 0x19, 0}, {'w', 0x1A, 0}, {'x', 0x1B, 0},
+    {'y', 0x1C, 0}, {'z', 0x1D, 0},
+    {' ', 0x2C, 0},
+    {'/', 0x38, 0},
+    {':', 0x33, 1},
+    {'-', 0x2D, 0},
+    {'>', 0x37, 1},
+};
+#else
 const hid_map_t hid_map[] = {
 
 	    {'a', 0x04, 0}, {'b', 0x05, 0}, {'c', 0x06, 0}, {'d', 0x07, 0},
@@ -289,6 +314,8 @@ const hid_map_t hid_map[] = {
 	    {'/', 0x38, 1},   // SHIFT + '
 	    {'>', 0x64, 1},   // SHIFT + <
 };
+#endif
+
 int find_hid(char c, uint8_t *keycode, uint8_t *shift) {
     for (int i = 0; i < sizeof(hid_map)/sizeof(hid_map[0]); i++) {
         if (hid_map[i].ascii == c) {
@@ -310,7 +337,7 @@ void send_string(const char *str) {
             else
                 send_keyboard_report(key);
 
-            HAL_Delay(200);
+            HAL_Delay(10);
 
         }
         str++;
@@ -356,6 +383,10 @@ void main_loop() {
 			break;
 		case WRITE_WORD: //STONE RULER
 				send_string("STONE RULER -> https://github.com/Socketto/RulerFirmware/releases");
+				send_keyboard_report(0x28);
+				send_string("Firmware build: " __DATE__ " " __TIME__);
+				send_keyboard_report(0x28);
+				send_string("STone -> the new development tool designed to solve the specific challenges of software programmers for HVAC/R units and systems");
 				send_keyboard_report(0x28);
 			break;
 		case THROWING_THE_DICE:
