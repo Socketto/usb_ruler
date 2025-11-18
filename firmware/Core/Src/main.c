@@ -338,7 +338,8 @@ void send_string(const char *str) {
                 send_keyboard_report(key);
 
             HAL_Delay(10);
-
+			send_keyboard_report(0x00);
+            HAL_Delay(10);
         }
         str++;
     }
@@ -389,10 +390,16 @@ void main_loop() {
 		case WRITE_WORD: //STONE RULER
 				send_string("STONE RULER -> https://github.com/Socketto/RulerFirmware/releases");
 				send_keyboard_report(0x28);
+				HAL_Delay(10);
+				send_keyboard_report(0x00);
 				send_string("Firmware build: " __DATE__ " " __TIME__);
 				send_keyboard_report(0x28);
+				HAL_Delay(10);
+				send_keyboard_report(0x00);
 				send_string("STone -> the new development tool designed to solve the specific challenges of software programmers for HVAC/R units and systems");
 				send_keyboard_report(0x28);
+				HAL_Delay(10);
+				send_keyboard_report(0x00);
 				ChaseLedStep(&currentLed,2);
 			break;
 		case THROWING_THE_DICE:
