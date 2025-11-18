@@ -368,16 +368,21 @@ void main_loop() {
 			HAL_Delay((rand() % 60) +1);
 			break;
 		case ANTI_HIBERNATION:
+			ChaseLedStep(&currentLed,2);
 			send_mouse_report(5, 0, 0); // Muove il mouse di 10 pixel
 			HAL_Delay(10);
+			ChaseLedStep(&currentLed,2);
 			send_mouse_report(0, 5, 0); // Muove il mouse di 10 pixel
 			HAL_Delay(10);
+			ChaseLedStep(&currentLed,2);
 			send_mouse_report(-5, 0, 0); // Muove il mouse di 10 pixel
 			HAL_Delay(10);
+			ChaseLedStep(&currentLed,2);
 			send_mouse_report(0, -5, 0); // Muove il mouse di 10 pixel
 			HAL_Delay(10);
 			break;
 		case LOCK_PC:
+			ChaseLedStep(&currentLed,2);
 			send_keyboard_comb_report(0x08,0x0F);
 			HAL_Delay(100);
 			break;
@@ -388,6 +393,7 @@ void main_loop() {
 				send_keyboard_report(0x28);
 				send_string("STone -> the new development tool designed to solve the specific challenges of software programmers for HVAC/R units and systems");
 				send_keyboard_report(0x28);
+				ChaseLedStep(&currentLed,2);
 			break;
 		case THROWING_THE_DICE:
 			GestisciLedDado();
