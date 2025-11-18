@@ -263,6 +263,60 @@ void GestisciLedDado(void)
 		HAL_GPIO_WritePin_EX(ledPorts[indici[i]], ledPins[indici[i]], GPIO_PIN_SET);
 	}
 }
+typedef struct {
+    char ascii;
+    uint8_t keycode;
+    uint8_t shift;
+} hid_map_t;
+
+const hid_map_t hid_map[] = {
+
+	    {'a', 0x04, 0}, {'b', 0x05, 0}, {'c', 0x06, 0}, {'d', 0x07, 0},
+	    {'e', 0x08, 0}, {'f', 0x09, 0}, {'g', 0x0A, 0}, {'h', 0x0B, 0},
+	    {'i', 0x0C, 0}, {'j', 0x0D, 0}, {'k', 0x0E, 0}, {'l', 0x0F, 0},
+	    {'m', 0x10, 0}, {'n', 0x11, 0}, {'o', 0x12, 0}, {'p', 0x13, 0},
+	    {'q', 0x14, 0}, {'r', 0x15, 0}, {'s', 0x16, 0}, {'t', 0x17, 0},
+	    {'u', 0x18, 0}, {'v', 0x19, 0}, {'w', 0x1A, 0}, {'x', 0x1B, 0},
+	    {'y', 0x1C, 0}, {'z', 0x1D, 0},
+
+
+	    {' ', 0x2C, 0},
+
+
+	    {'.', 0x37, 0},
+	    {'-', 0x2D, 0},
+	    {':', 0x33, 1},   // SHIFT + ;
+	    {'/', 0x38, 1},   // SHIFT + '
+	    {'>', 0x64, 1},   // SHIFT + <
+};
+int find_hid(char c, uint8_t *keycode, uint8_t *shift) {
+    for (int i = 0; i < sizeof(hid_map)/sizeof(hid_map[0]); i++) {
+        if (hid_map[i].ascii == c) {
+            *keycode = hid_map[i].keycode;
+            *shift = hid_map[i].shift;
+            return 1;
+        }
+    }
+    return 0;
+}
+void send_string(const char *str) {
+    uint8_t key, shift;
+
+    while (*str) {
+        if (find_hid(*str, &key, &shift)) {
+
+            if (shift)
+                send_keyboard_comb_report(0x02, key); // SHIFT + key
+            else
+                send_keyboard_report(key);
+
+            HAL_Delay(200);
+
+        }
+        str++;
+    }
+}
+
 
 #define BUF_SIZE        2000
 #define FRAME_TIMEOUT_MS 5   // timeout in ms tra byte per determinare fine frame
@@ -300,17 +354,9 @@ void main_loop() {
 			send_keyboard_comb_report(0x08,0x0F);
 			HAL_Delay(100);
 			break;
-		case WRITE_WORD:
-			HAL_Delay(100);
-			send_keyboard_report(0x06);
-			HAL_Delay(100);
-			send_keyboard_report(0x0c);
-			HAL_Delay(100);
-			send_keyboard_report(0x04);
-			HAL_Delay(100);
-			send_keyboard_report(0x12);
-			HAL_Delay(100);
-			send_keyboard_report(0x2C);
+		case WRITE_WORD: //STONE RULER
+				send_string("STONE RULER -> https://github.com/Socketto/RulerFirmware/releases");
+				send_keyboard_report(0x28);
 			break;
 		case THROWING_THE_DICE:
 			GestisciLedDado();
