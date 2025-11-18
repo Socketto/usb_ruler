@@ -170,6 +170,7 @@ int8_t FindLedIndex(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin)
     return -1; // non trovato
 }
 
+uint8_t ramp_updown[NUM_LEDS];   // uno per LED
 void HAL_GPIO_WritePin_EX(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin, int PinState)
 {
     int8_t ledIndex = FindLedIndex(GPIOx, GPIO_Pin);
@@ -181,15 +182,46 @@ void HAL_GPIO_WritePin_EX(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin, int PinState)
             pwm_duty[ledIndex] = 0;     // LED spento (0% duty)
         else
         {
-        	if(PinState == 2)
+        	switch(PinState)
         	{
+        	case 2:
         		if(pwm_duty[ledIndex] > DUTY_CYCLE_LED_ON/4)
         			pwm_duty[ledIndex] -= DUTY_CYCLE_LED_ON/4;
         		else
         			pwm_duty[ledIndex] =0;
-        	}
-        	else
+        		break;
+        	case 3:
+        		if(pwm_duty[ledIndex] > DUTY_CYCLE_LED_ON/8)
+        			pwm_duty[ledIndex] -= DUTY_CYCLE_LED_ON/8;
+        		else
+        			pwm_duty[ledIndex] =0;
+        		break;
+        	case 4:
+        		if(ramp_updown[ledIndex] == 0)
+        		{
+        			if(pwm_duty[ledIndex] > DUTY_CYCLE_LED_ON/20)
+        			    pwm_duty[ledIndex] -= DUTY_CYCLE_LED_ON/20;
+        			else
+        			{
+        			    pwm_duty[ledIndex] =0;
+        			    ramp_updown[ledIndex] = 1;
+        			}
+        		}
+        		else
+        		{
+        			if(pwm_duty[ledIndex] < DUTY_CYCLE_LED_ON)
+        			    pwm_duty[ledIndex] += DUTY_CYCLE_LED_ON/20;
+        			else
+        			{
+        			    pwm_duty[ledIndex] =DUTY_CYCLE_LED_ON;
+        			    ramp_updown[ledIndex] = 0;
+        			}
+        		}
+        		break;
+        	default:
         		pwm_duty[ledIndex] = DUTY_CYCLE_LED_ON;   // LED acceso pieno (100% duty)
+        		break;
+        	}
         }
     }
     else
@@ -296,23 +328,44 @@ const hid_map_t hid_map[] = {
 #else
 const hid_map_t hid_map[] = {
 
-	    {'a', 0x04, 0}, {'b', 0x05, 0}, {'c', 0x06, 0}, {'d', 0x07, 0},
-	    {'e', 0x08, 0}, {'f', 0x09, 0}, {'g', 0x0A, 0}, {'h', 0x0B, 0},
-	    {'i', 0x0C, 0}, {'j', 0x0D, 0}, {'k', 0x0E, 0}, {'l', 0x0F, 0},
-	    {'m', 0x10, 0}, {'n', 0x11, 0}, {'o', 0x12, 0}, {'p', 0x13, 0},
-	    {'q', 0x14, 0}, {'r', 0x15, 0}, {'s', 0x16, 0}, {'t', 0x17, 0},
-	    {'u', 0x18, 0}, {'v', 0x19, 0}, {'w', 0x1A, 0}, {'x', 0x1B, 0},
-	    {'y', 0x1C, 0}, {'z', 0x1D, 0},
+		    // LETTERE
+		    {'a', 0x04, 0}, {'b', 0x05, 0}, {'c', 0x06, 0}, {'d', 0x07, 0},
+		    {'e', 0x08, 0}, {'f', 0x09, 0}, {'g', 0x0A, 0}, {'h', 0x0B, 0},
+		    {'i', 0x0C, 0}, {'j', 0x0D, 0}, {'k', 0x0E, 0}, {'l', 0x0F, 0},
+		    {'m', 0x10, 0}, {'n', 0x11, 0}, {'o', 0x12, 0}, {'p', 0x13, 0},
+		    {'q', 0x14, 0}, {'r', 0x15, 0}, {'s', 0x16, 0}, {'t', 0x17, 0},
+		    {'u', 0x18, 0}, {'v', 0x19, 0}, {'w', 0x1A, 0}, {'x', 0x1B, 0},
+		    {'y', 0x1C, 0}, {'z', 0x1D, 0},
 
+		    // CIFRE
+		    {'0', 0x27, 0}, {'1', 0x1E, 0}, {'2', 0x1F, 0}, {'3', 0x20, 0},
+		    {'4', 0x21, 0}, {'5', 0x22, 0}, {'6', 0x23, 0}, {'7', 0x24, 0},
+		    {'8', 0x25, 0}, {'9', 0x26, 0},
 
-	    {' ', 0x2C, 0},
+		    // SPAZIO
+		    {' ', 0x2C, 0},
 
+		    // PUNTEGGIATURA IT
+		    {'.', 0x37, 0},      // .
+		    {',', 0x36, 0},      // ,
+		    {'-', 0x2D, 0},      // -
+		    {'_', 0x2D, 1},      // _
+		    {';', 0x33, 0},      // ;
+		    {':', 0x33, 1},      // :
+		    {'\'', 0x34, 0},     // '
+		    {'"', 0x34, 1},      // "
+		    {'<', 0x36, 0},      // <
+		    {'>', 0x36, 1},      // >
 
-	    {'.', 0x37, 0},
-	    {'-', 0x2D, 0},
-	    {':', 0x33, 1},   // SHIFT + ;
-	    {'/', 0x38, 1},   // SHIFT + '
-	    {'>', 0x64, 1},   // SHIFT + <
+		    // SIMBOLI CHE SERVONO PER URL
+		    {'/', 0x24, 1},      // /  =  SHIFT + 7 (ITALIANO)
+		    {'@', 0x1F, 1},      // @ = SHIFT + 2
+		    {'#', 0x20, 1},      // #
+		    {'$', 0x21, 1},      // $
+		    {'%', 0x22, 1},      // %
+		    {'&', 0x24, 1},      // &
+		    {'!', 0x1E, 1},      // !
+
 };
 #endif
 
@@ -327,20 +380,25 @@ int find_hid(char c, uint8_t *keycode, uint8_t *shift) {
     return 0;
 }
 void send_string(const char *str) {
-    uint8_t key, shift;
+    uint8_t key = 0, shift = 0;
 
     while (*str) {
-        if (find_hid(*str, &key, &shift)) {
+        char c = *str;
 
-            if (shift)
-                send_keyboard_comb_report(0x02, key); // SHIFT + key
-            else
-                send_keyboard_report(key);
-
-            HAL_Delay(10);
-			send_keyboard_report(0x00);
-            HAL_Delay(10);
+        // Trasforma uppercase → lowercase + shift
+        if (c >= 'A' && c <= 'Z') {
+            c = c + 32;          // tolower
+            shift = 1;
+        } else {
+            shift = 0;
         }
+
+        if (find_hid(c, &key, &shift)) {
+
+        	send_keyboard_report(key);
+            HAL_Delay(20);
+        }
+
         str++;
     }
 }
@@ -365,7 +423,7 @@ void main_loop() {
 			break;
 		case NONE_CASUAL:
 			currentLed = rand() % 8;
-			ChaseLedStep(&currentLed,2);
+			ChaseLedStep(&currentLed,(rand() % 2) + 2);
 			HAL_Delay((rand() % 60) +1);
 			break;
 		case ANTI_HIBERNATION:
@@ -388,18 +446,7 @@ void main_loop() {
 			HAL_Delay(100);
 			break;
 		case WRITE_WORD: //STONE RULER
-				send_string("STONE RULER -> https://github.com/Socketto/RulerFirmware/releases");
-				send_keyboard_report(0x28);
-				HAL_Delay(10);
-				send_keyboard_report(0x00);
-				send_string("Firmware build: " __DATE__ " " __TIME__);
-				send_keyboard_report(0x28);
-				HAL_Delay(10);
-				send_keyboard_report(0x00);
-				send_string("STone -> the new development tool designed to solve the specific challenges of software programmers for HVAC/R units and systems");
-				send_keyboard_report(0x28);
-				HAL_Delay(10);
-				send_keyboard_report(0x00);
+				send_string("stone ");
 				ChaseLedStep(&currentLed,2);
 			break;
 		case THROWING_THE_DICE:
@@ -412,11 +459,8 @@ void main_loop() {
 			if(break_value)
 			{
 			    for(int i=0;i<8;i++)
-			    	HAL_GPIO_WritePin_EX(ledPorts[i], ledPins[i], GPIO_PIN_SET);
-			    HAL_Delay(100);
-			    for(int i=0;i<8;i++)
-			    	HAL_GPIO_WritePin_EX(ledPorts[i], ledPins[i], GPIO_PIN_RESET);
-			    HAL_Delay(100);
+			    	HAL_GPIO_WritePin_EX(ledPorts[i], ledPins[i], 4);
+			    HAL_Delay(10);
 			    return;
 			}
 
