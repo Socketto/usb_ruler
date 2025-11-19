@@ -525,7 +525,9 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 		ModbusFrame frame;
 		if (decode_modbus_frame(Buf, *Len, &frame))
 		{
+			HAL_Delay(10);
 			CDC_Transmit_FS(modbus_response, modbus_response_len);
+			HAL_Delay(10);
 		}
 
 		break;
