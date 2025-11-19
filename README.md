@@ -29,7 +29,7 @@ By setting different binary combinations (**000–111**), the board performs **e
 |----------------------|----------|
 | **000** | LEDs turn on in **random mode**. |
 | **001** | Simulates a USB keyboard and repeatedly sends the screen-lock command. |
-| **010** | Simulates a USB RS-485 transceiver (similar to the CAREL "ovetto" interface). |
+| **010** | Simulates a USB RS-485 transceiver (similar to the CAREL "ovetto" interface) Max baud 115200. |
 | **011** | Simulates a USB mouse and keeps moving the cursor to prevent the PC from locking. |
 | **100** | Enables serial communication and simulates a Modbus device. The first 8 coils correspond to the LEDs. |
 | **101** | Simulates a USB keyboard and automatically types a predefined word. |
