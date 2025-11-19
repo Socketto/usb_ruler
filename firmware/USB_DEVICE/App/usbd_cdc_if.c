@@ -374,15 +374,14 @@ uint16_t modbus_crc16(const uint8_t *buf, uint16_t len) {
 
 // Funzione per preparare una risposta normale
 void modbus_build_response(uint8_t address, uint8_t function, const uint8_t *data, uint16_t data_len) {
-	modbus_response[0] = address;
-	modbus_response[1] = function;
-	for (uint16_t i = 0; i < data_len; i++) {
-		modbus_response[2 + i] = data[i];
-	}
-	uint16_t crc = modbus_crc16(modbus_response, 2 + data_len);
-	modbus_response[2 + data_len] = crc & 0xFF;       // CRC low
-	modbus_response[3 + data_len] = (crc >> 8) & 0xFF; // CRC high
-	modbus_response_len = 4 + data_len;
+    if (data_len > 252) data_len = 252; // protezione
+    modbus_response[0] = address;
+    modbus_response[1] = function;
+    memcpy(&modbus_response[2], data, data_len);
+    uint16_t crc = modbus_crc16(modbus_response, 2 + data_len);
+    modbus_response[2 + data_len] = crc & 0xFF;
+    modbus_response[3 + data_len] = (crc >> 8) & 0xFF;
+    modbus_response_len = 4 + data_len;
 }
 
 // Funzione per preparare una risposta di eccezione
@@ -400,107 +399,143 @@ extern GPIO_TypeDef* ledPorts[];
 extern uint16_t ledPins[];
 // Funzione di decodifica e risposta
 bool decode_modbus_frame(const uint8_t *buffer, uint16_t len, ModbusFrame *frame) {
-	if (len < 4) {
-		return false;
-	}
+    if (len < 4) {
+        return false;
+    }
 
-	frame->address = buffer[0];
-	frame->function = buffer[1];
-	frame->data_len = len - 4; // esclusi CRC e intestazione
+    // Protect against absurdly large incoming len
+    if (len > 256) return false; // modbus_response max size assumption
 
-	for (uint16_t i = 0; i < frame->data_len; i++) {
-		frame->data[i] = buffer[2 + i];
-	}
+    frame->address = buffer[0];
+    frame->function = buffer[1];
 
-	frame->crc = buffer[len - 2] | (buffer[len - 1] << 8);
-	uint16_t calc_crc = modbus_crc16(buffer, len - 2);
-	frame->crc_ok = (calc_crc == frame->crc);
+    // data_len is payload excluding addr, func, crc(2)
+    if (len < 4) return false;
+    frame->data_len = len - 4;
 
-	if (!frame->crc_ok) {
-		return false;
-	}
+    if (frame->data_len > sizeof(frame->data)) {
+        // payload too large
+        return false;
+    }
 
-	// Gestione funzioni
-	switch (frame->function) {
-	case 0x01: // Read Coils
-	{
-		uint8_t coil_status[2];
-		coil_status[0] = 0x01; // numero di byte dati (8 coil = 1 byte)
-		coil_status[1] = 0x00;
+    for (uint16_t i = 0; i < frame->data_len; i++) {
+        frame->data[i] = buffer[2 + i];
+    }
 
-		for (int i = 0; i < 8; i++) {
-			GPIO_PinState state = HAL_GPIO_ReadPin(ledPorts[i], ledPins[i]);
-			if (state == GPIO_PIN_SET) {
-				coil_status[1] |= (1 << i); // set bit se coil attivo
-			}
-		}
+    frame->crc = buffer[len - 2] | (buffer[len - 1] << 8);
+    uint16_t calc_crc = modbus_crc16(buffer, len - 2);
+    frame->crc_ok = (calc_crc == frame->crc);
 
-		modbus_build_response(frame->address, frame->function, coil_status, 2);
-	}
-	break;
+    if (!frame->crc_ok) {
+        return false;
+    }
 
-	case 0x05: // Write Single Coil
-	{
-		uint16_t coil_addr = (frame->data[0] << 8) | frame->data[1];
-		uint16_t coil_val  = (frame->data[2] << 8) | frame->data[3];
+    // Validate minimal lengths per function and handle
+    switch (frame->function) {
+    case 0x01: // Read Coils: request PDU: start_hi,start_lo, quantity_hi,quantity_lo -> 4 bytes
+        if (frame->data_len < 4) {
+            modbus_build_exception(frame->address, frame->function, 0x03); // Illegal Data Value
+            return true; // we built an exception
+        }
+        {
+            uint16_t start = (frame->data[0] << 8) | frame->data[1];
+            uint16_t quantity = (frame->data[2] << 8) | frame->data[3];
+            if (quantity == 0 || quantity > 2000) { // Modbus limit arbitrary cap
+                modbus_build_exception(frame->address, frame->function, 0x03);
+                return true;
+            }
+            if ((start + quantity) > 8) { // adapt to your coil count
+                modbus_build_exception(frame->address, frame->function, 0x02); // addr out of range
+                return true;
+            }
+            // Build response with byte count and exact bits
+            uint16_t byte_count = (quantity + 7) / 8;
+            uint8_t resp[1 + 256]; // safe local buffer
+            resp[0] = (uint8_t)byte_count;
+            for (uint16_t b = 0; b < byte_count; b++) resp[1 + b] = 0;
+            for (uint16_t i = 0; i < quantity; i++) {
+                uint16_t coil_index = start + i;
+                GPIO_PinState state = HAL_GPIO_ReadPin(ledPorts[coil_index], ledPins[coil_index]);
+                if (state == GPIO_PIN_SET) {
+                    resp[1 + (i / 8)] |= (1 << (i % 8));
+                }
+            }
+            modbus_build_response(frame->address, frame->function, resp, 1 + byte_count);
+        }
+        break;
 
-		if (coil_addr < 8) {
-			if (coil_val == 0xFF00) {
-				HAL_GPIO_WritePin_EX(ledPorts[coil_addr], ledPins[coil_addr], GPIO_PIN_SET);
-			} else if (coil_val == 0x0000) {
-				HAL_GPIO_WritePin_EX(ledPorts[coil_addr], ledPins[coil_addr], GPIO_PIN_RESET);
-			} else {
-				// valore illegale b exception
-				modbus_build_exception(frame->address, frame->function, 0x03); // Illegal Data Value
-				break;
-			}
-			// Risposta = echo della richiesta
-			modbus_build_response(frame->address, frame->function, frame->data, 4);
-		} else {
-			// indirizzo coil fuori range
-			modbus_build_exception(frame->address, frame->function, 0x02); // Illegal Data Address
-		}
-	}
-	break;
+    case 0x05: // Write Single Coil: payload must be 4 bytes
+        if (frame->data_len < 4) {
+            modbus_build_exception(frame->address, frame->function, 0x03);
+            return true;
+        }
+        {
+            uint16_t coil_addr = (frame->data[0] << 8) | frame->data[1];
+            uint16_t coil_val  = (frame->data[2] << 8) | frame->data[3];
 
-	case 0x0F: // Write Multiple Coils
-	{
-		uint16_t start_addr = (frame->data[0] << 8) | frame->data[1];
-		uint16_t quantity   = (frame->data[2] << 8) | frame->data[3];
+            if (coil_addr < 8) {
+                if (coil_val == 0xFF00) {
+                    HAL_GPIO_WritePin_EX(ledPorts[coil_addr], ledPins[coil_addr], GPIO_PIN_SET);
+                } else if (coil_val == 0x0000) {
+                    HAL_GPIO_WritePin_EX(ledPorts[coil_addr], ledPins[coil_addr], GPIO_PIN_RESET);
+                } else {
+                    modbus_build_exception(frame->address, frame->function, 0x03); // Illegal Data Value
+                    return true;
+                }
+                // echo original 4 bytes
+                modbus_build_response(frame->address, frame->function, frame->data, 4);
+            } else {
+                modbus_build_exception(frame->address, frame->function, 0x02); // Illegal Data Address
+            }
+        }
+        break;
 
+    case 0x0F: // Write Multiple Coils
+        // requires at least start(2)+quantity(2)+bytecount(1) = 5 bytes
+        if (frame->data_len < 5) {
+            modbus_build_exception(frame->address, frame->function, 0x03);
+            return true;
+        }
+        {
+            uint16_t start_addr = (frame->data[0] << 8) | frame->data[1];
+            uint16_t quantity   = (frame->data[2] << 8) | frame->data[3];
+            uint8_t byte_count  = frame->data[4];
 
-		if ((start_addr + quantity) <= 8) {
-			for (uint16_t i = 0; i < quantity; i++) {
-				uint8_t byte_index = 5 + (i / 8);
-				uint8_t bit_index = i % 8;
-				int coil = (frame->data[byte_index] >> bit_index) & 0x01;
+            uint16_t expected_byte_count = (quantity + 7) / 8;
+            if (byte_count != expected_byte_count || frame->data_len < 5 + byte_count) {
+                modbus_build_exception(frame->address, frame->function, 0x03);
+                return true;
+            }
 
-				HAL_GPIO_WritePin_EX(ledPorts[start_addr + i],
-				                  ledPins[start_addr + i],
-				                  coil ? GPIO_PIN_SET : GPIO_PIN_RESET);
-			}
+            if ((start_addr + quantity) > 8) {
+                modbus_build_exception(frame->address, frame->function, 0x02);
+                return true;
+            }
 
-			// Risposta = echo con start_addr + quantity
-			uint8_t resp[4];
-			resp[0] = frame->data[0];
-			resp[1] = frame->data[1];
-			resp[2] = frame->data[2];
-			resp[3] = frame->data[3];
-			modbus_build_response(frame->address, frame->function, resp, 4);
-		} else {
-			// fuori range
-			modbus_build_exception(frame->address, frame->function, 0x02); // Illegal Data Address
-		}
-	}
-	break;
+            for (uint16_t i = 0; i < quantity; i++) {
+                uint16_t data_byte_index = 5 + (i / 8);
+                uint8_t bit_index = i % 8;
+                int coil = (frame->data[data_byte_index] >> bit_index) & 0x01;
+                HAL_GPIO_WritePin_EX(ledPorts[start_addr + i],
+                                     ledPins[start_addr + i],
+                                     coil ? GPIO_PIN_SET : GPIO_PIN_RESET);
+            }
 
-	default:
-		// Funzione non supportata
-		modbus_build_exception(frame->address, frame->function, 0x01); // Illegal Function
-		break;
-	}
+            uint8_t resp[4];
+            resp[0] = frame->data[0];
+            resp[1] = frame->data[1];
+            resp[2] = frame->data[2];
+            resp[3] = frame->data[3];
+            modbus_build_response(frame->address, frame->function, resp, 4);
+        }
+        break;
 
-	return true;
+    default:
+        modbus_build_exception(frame->address, frame->function, 0x01); // Illegal Function
+        break;
+    }
+
+    return true;
 }
 
 
@@ -525,11 +560,12 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 		ModbusFrame frame;
 		if (decode_modbus_frame(Buf, *Len, &frame))
 		{
-			HAL_Delay(10);
 			CDC_Transmit_FS(modbus_response, modbus_response_len);
-			HAL_Delay(10);
 		}
-
+		else
+		{
+			rectran = rectran;
+		}
 		break;
 	default:
 		break;
