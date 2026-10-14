@@ -12,6 +12,8 @@ By setting different binary combinations (**000–111**), the board performs **e
 > ⚠️ Some modes simulate a USB keyboard or mouse.  
 > Use the device only on systems where you have permission.
 
+![Board](images/2.png)
+
 ---
 
 ## How to Select a Function
@@ -20,6 +22,8 @@ By setting different binary combinations (**000–111**), the board performs **e
 2. Set the switches to match one of the binary combinations listed below.
 3. Connect the board to a PC via **USB-C**.
 4. The selected function starts automatically.
+
+![Board](images/1.png)
 
 ---
 
